@@ -7,7 +7,7 @@ The notebooks included here were developed after the initial PEARL prototype in 
 1. the design and structural evaluation of short hotspot-centred peptides;
 2. the generation and validation of CLEAR-inspired counterfactual peptide candidates.
 
-Pipeline 2 is therefore not a simple numerical continuation of Pipeline 1. It represents a separate stage of methodological development focused on peptide miniaturization, local sequence optimization, FoldX evaluation and Rosetta FlexPepDock refinement.
+Pipeline 2 is therefore not a simple numerical continuation of Pipeline 1. It represents a separate stage of methodological development focused on peptide miniaturization, local sequence optimization, FoldX evaluation, Rosetta FlexPepDock refinement and interpretable adjacent-residue pair scoring.
 
 ---
 
@@ -56,6 +56,8 @@ Pipeline 2 starts from selected structural and sequence information obtained dur
     FoldX structural validation
         ↓
     Rosetta FlexPepDock refinement
+        ↓
+    adjacent amino-acid pair scoring and interpretation
 
 ---
 
@@ -87,6 +89,7 @@ The analyses contained in this directory are computational and do not constitute
 - `04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb`
 - `05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb`
 - `05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb`
+- `05e_CLEAR_Adjacent_Amino_Acid_Pair_Energy_Scoring.ipynb`
 
 The notebook names are preserved as originally developed.
 
@@ -284,6 +287,33 @@ This stage provides a more computationally expensive validation layer and should
 
 ---
 
+## `05e_CLEAR_Adjacent_Amino_Acid_Pair_Energy_Scoring.ipynb`
+
+This notebook implements an interpretable scoring function for adjacent amino-acid pairs in the peptide sequence.
+
+For a peptide sequence of length `L`, the notebook evaluates the `L - 1` adjacent pairs and computes a position-specific surrogate cost:
+
+    (a1,a2), (a2,a3), ..., (aL-1,aL)
+
+Main operations include:
+
+- extraction of all adjacent amino-acid pairs from the local 04c variant dataset;
+- estimation of position-specific pair statistics;
+- shrinkage regularization for rarely observed pairs;
+- conversion of the local target signal into an empirical pair cost;
+- comparison of each observed pair with alternative combinations allowed by the CLEAR positional constraints;
+- calculation of total and position-wise pair costs for F0010 and the final CLEAR candidates;
+- decomposition of sequence changes relative to the seed peptide;
+- integration of pair scores with FoldX and Rosetta results;
+- computation of correlations with FoldX `ΔΔG`, FlexPepDock scores and the final structural ranking;
+- export of reusable pair-cost tables and the function `adjacent_pair_energy_score(sequence)`.
+
+The notebook supports interpretation of why specific substitutions are preferred by the local surrogate model. For example, a single mutation may alter two adjacent pairs simultaneously and therefore accumulate multiple local contributions.
+
+The resulting value is an **empirical, position-specific surrogate energetic cost**. It is not an absolute physical energy in kcal/mol and does not replace FoldX, Rosetta or experimental validation.
+
+---
+
 ## Recommended execution logic
 
 Pipeline 2 contains two complementary branches and should not be interpreted as one uninterrupted notebook sequence.
@@ -309,6 +339,8 @@ Pipeline 2 contains two complementary branches and should not be interpreted as 
     05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation
         ↓
     05d_CLEAR_Counterfactual_FlexPepDock_Refinement
+        ↓
+    05e_CLEAR_Adjacent_Amino_Acid_Pair_Energy_Scoring
 
 The two branches provide complementary strategies for peptide design and structural prioritization.
 
@@ -402,6 +434,10 @@ Depending on the selected branch, the pipeline may generate:
 - refined PDB structures;
 - Rosetta score files;
 - structural and energetic candidate rankings;
+- position-specific adjacent-pair cost matrices;
+- candidate pairwise scores and pair-level changes relative to F0010;
+- rankings of alternative amino-acid pairs allowed by CLEAR constraints;
+- integrated pair-score, FoldX and Rosetta comparison tables;
 - diagnostic plots;
 - CSV reports.
 
@@ -429,6 +465,9 @@ The following limitations should be considered:
 - counterfactual improvement refers to the modelled target;
 - a favourable oracle prediction does not guarantee improved binding;
 - a favourable Rosetta score is not a binding-affinity measurement;
+- the adjacent-pair score is an empirical surrogate derived from the local 04c dataset;
+- adjacent-pair costs are position-specific and are not absolute physical energies;
+- the pairwise analysis is not independent of the oracle target and should be used mainly for interpretation;
 - docking results depend on the starting pose and sampling protocol;
 - small score differences may not be biologically meaningful;
 - peptide selectivity, stability, toxicity and cellular activity are not established;
@@ -451,7 +490,8 @@ The final candidates should therefore be interpreted as ranked structural hypoth
     ├── 04d_CLEAR_Peptide_Oracle_Training.ipynb
     ├── 04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
     ├── 05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
-    └── 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
+    ├── 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
+    └── 05e_CLEAR_Adjacent_Amino_Acid_Pair_Energy_Scoring.ipynb
 
 ---
 
@@ -461,7 +501,5 @@ The final candidates should therefore be interpreted as ranked structural hypoth
 - **Scope:** peptide miniaturization, CLEAR-inspired optimization and structural validation
 - **Validation level:** computational and non-experimental
 - **Purpose:** research, methodological development and academic presentation
-
-├── 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb 
 
 
