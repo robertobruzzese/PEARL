@@ -126,25 +126,6 @@ of the original interface signal.
 
 ⸻
 
-## 03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
-
-Extends and corrects the contiguous-window workflow by explicitly integrating
-energetic-hotspot information.
-
-Main operations include:
-
-* ranking contiguous peptide windows;
-* evaluating hotspot retention;
-* selecting the reference seed;
-* generating conservative sequence variants;
-* combining sequence, structural and energetic criteria;
-* exporting prioritized candidates.
-
-The FIXED suffix indicates that this notebook contains corrections or
-stabilized logic relative to earlier versions.
-
-⸻
-
 ## 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
 
 Prepares selected short peptides for receptor–peptide structural evaluation.
@@ -314,8 +295,7 @@ not always be executed as one uninterrupted sequence.
 
 ## Branch 1 — Short hotspot-centred peptides
 
-02_Interface_Subgraph_Search
-    ↓
+ 
 02c_Hotspot_Centered_Peptide_Library
     ↓
 02d_Short_Peptide_Structural_and_Energetic_Ranking
@@ -326,10 +306,7 @@ not always be executed as one uninterrupted sequence.
 
 ## Branch 2 — Contiguous seed and generated peptide variants
 
-03_Contiguous_Peptide_Window_Diffusion
-        or
-03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED
-    ↓
+ 
 04b_Candidate_Validation_PreDocking_EnergeticHotspots
     ↓
 05b_Structural_Preparation_Seed_and_Candidates_FoldX
