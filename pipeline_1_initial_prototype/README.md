@@ -1,178 +1,310 @@
-# Pipeline 1 – Initial Prototype
-
-This directory contains the notebooks of the first PEARL prototype.
-Ho verificato la cartella: contiene cinque notebook, contando 01B come passaggio autonomo di validazione tra il notebook 01 e il notebook 02b. L’ordine corretto da dichiarare è quindi 01 → 01B → 02b → 03b → 04b.  
-
-Sostituirei l’attuale README molto breve con questo:
-
-PEARL Pipeline 1 — Initial Prototype
+# PEARL Pipeline 1 — Initial Prototype
 
 This directory contains the first computational prototype developed for the PEARL project.
 
 The purpose of this pipeline is to start from an EGFR crystallographic structure, identify a candidate protein–protein interface, estimate structurally and energetically important interface residues, extract a contiguous seed peptide, generate sequence variants, and prioritize peptide candidates before structural docking.
 
-Pipeline overview
+Pipeline 1 should be interpreted as the initial end-to-end implementation of the PEARL workflow. The notebooks in this directory form one sequential pipeline and should be executed in the order reported below.
 
-EGFR PDB structure
+---
+
+## Pipeline overview
+
+    EGFR PDB structure
         ↓
-chain and interface analysis
+    chain and interface analysis
         ↓
-biological and structural interface validation
+    biological and structural interface validation
         ↓
-FoldX alanine scanning and hotspot identification
+    FoldX alanine scanning and hotspot identification
         ↓
-contiguous seed-peptide extraction
+    contiguous seed-peptide extraction
         ↓
-local peptide-variant generation
+    local peptide-variant generation
         ↓
-pre-docking candidate validation and ranking
+    pre-docking candidate validation and ranking
 
-System studied
+---
 
-* Target: Epidermal Growth Factor Receptor, EGFR
-* PDB structure: 3NJP
-* Initial interface selected: chains B–D
-* Initial contact cutoff: 4.5 Å
-* Main output: a ranked collection of peptide candidates derived from an interface seed sequence
+## Biological system
 
-The selection of chains B–D was initially based on structural contact analysis and was subsequently examined in the biological-interface validation notebook.
+- **Target:** Epidermal Growth Factor Receptor, EGFR
+- **Reference structure:** PDB `3NJP`
+- **Initial interface selected:** chains `B–D`
+- **Initial heavy-atom contact cutoff:** 4.5 Å
+- **Reference peptide source:** a contiguous region extracted from the selected protein–protein interface
+- **Main output:** a ranked collection of peptide candidates derived from an interface seed sequence
 
-Execution order
+The `B–D` interface was initially selected by comparing the number of inter-chain structural contacts. This choice was subsequently examined in the biological-interface validation notebook.
 
-The notebooks should be executed in the following order:
+The analyses contained in this directory are computational and do not constitute experimental evidence of peptide binding, inhibition or biological activity.
 
-1. 01_EGFR_PDB_to_Interface_Graph.ipynb
+---
 
-Downloads and parses the EGFR structure, identifies the available chains, calculates inter-chain contacts, and constructs a residue-level interface graph.
+## Notebooks included
+
+- `01_EGFR_PDB_to_Interface_Graph.ipynb`
+- `01B_Biological_Interface_Validation.ipynb`
+- `02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED.ipynb`
+- `03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb`
+- `04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb`
+
+Notebook `01B` is an autonomous validation step placed between Notebook `01` and Notebook `02b`. It should not be interpreted merely as an alternative version of Notebook `01`.
+
+---
+
+## Recommended execution order
+
+    01_EGFR_PDB_to_Interface_Graph
+        ↓
+    01B_Biological_Interface_Validation
+        ↓
+    02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED
+        ↓
+    03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED
+        ↓
+    04b_Candidate_Validation_PreDocking_EnergeticHotspots
+
+---
+
+# Notebook descriptions
+
+## `01_EGFR_PDB_to_Interface_Graph.ipynb`
+
+This notebook downloads and parses the EGFR structure, identifies the available chains, calculates inter-chain contacts and constructs a residue-level interface graph.
 
 Main operations include:
 
-* PDB retrieval and parsing;
-* chain and residue inspection;
-* heavy-atom contact detection;
-* comparison of chain-pair interfaces;
-* selection of a candidate interface;
-* construction of an interface contact network;
-* calculation of graph-based residue centrality measures.
+- retrieval and parsing of PDB structure `3NJP`;
+- inspection of models, chains and residues;
+- exclusion of hydrogen atoms from contact analysis;
+- detection of heavy-atom contacts using a 4.5 Å cutoff;
+- comparison of all chain-pair interfaces;
+- initial selection of the `B–D` interface;
+- construction of a residue-level interface graph;
+- calculation of degree and betweenness centrality;
+- identification of structurally central interface residues;
+- export of contact tables and graph-related statistics.
 
-2. 01B_Biological_Interface_Validation.ipynb
+The number of structural contacts is used as an initial geometric criterion. It is not, by itself, sufficient to establish that an interface is biologically relevant.
 
-Provides an additional validation step for the interface selected in Notebook 01.
+---
 
-Its purpose is to determine whether the interface selected from the number of structural contacts is also compatible with the biological assembly and the known structural organization of the EGFR complex.
+## `01B_Biological_Interface_Validation.ipynb`
 
-This notebook should be interpreted as a validation and interpretation step, rather than as an independent peptide-design stage.
+This notebook provides an additional biological and structural validation step for the interface selected in Notebook `01`.
 
-3. 02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED.ipynb
+Its purpose is to determine whether the interface selected from structural contact analysis is also compatible with:
 
-Evaluates the energetic contribution of interface residues through computational alanine scanning using FoldX.
+- the biological assembly of the crystallographic structure;
+- the known organization of the EGFR complex;
+- chain identity and symmetry;
+- structural annotations associated with the PDB entry;
+- the biological plausibility of the selected chain pair.
 
-Main operations include:
+This notebook should be interpreted as a validation and interpretation stage rather than as an independent peptide-design procedure.
 
-* preparation of the selected interface structure;
-* mutation of interface residues to alanine;
-* FoldX BuildModel execution;
-* estimation of mutation-induced energy changes;
-* identification of candidate energetic hotspots;
-* integration of energetic, contact, and graph-based information.
+Its role is to reduce the risk of carrying an interface forward solely because it contains the largest number of geometric contacts.
 
-Residues with a sufficiently positive mutation-induced energy change are considered candidate hotspots because their replacement with alanine is predicted to destabilize the interface.
+---
 
-4. 03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
+## `02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED.ipynb`
 
-Searches the selected interface chain for contiguous peptide windows that retain important interface residues and energetic hotspots.
-
-Main operations include:
-
-* construction and ranking of contiguous sequence windows;
-* selection of a seed peptide;
-* representation of interface and hotspot positions within the seed;
-* generation of conservative local sequence variants;
-* candidate scoring based on sequence, structural, and energetic constraints.
-
-The initial prototype selected a 30-residue seed peptide from chain D:
-
-YIEALDKYACNCVVGYIGERCQYRDLKWWE
-
-The generated candidates represent local variants of this seed and are not yet validated binders.
-
-5. 04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb
-
-Performs pre-docking validation and ranking of the generated peptide candidates.
+This notebook estimates the energetic contribution of interface residues through computational alanine scanning using FoldX.
 
 Main operations include:
 
-* sequence-validity checks;
-* conservation of important interface positions;
-* hotspot-retention analysis;
-* physicochemical filtering;
-* comparison with the original seed;
-* calculation of a composite pre-docking score;
-* prioritization of candidates for subsequent structural analysis.
+- preparation of the selected interface structure;
+- definition of interface residues to be scanned;
+- mutation of selected residues to alanine;
+- generation of FoldX `BuildModel` inputs;
+- execution or preparation of FoldX calculations;
+- parsing of mutation-induced energy differences;
+- identification of candidate energetic hotspots;
+- integration of FoldX, contact and graph-based information;
+- construction of ranked interface-residue tables;
+- identification of contiguous regions enriched in important residues.
 
-The output of this notebook is a reduced and ranked set of candidates intended for later FoldX evaluation, peptide docking, and molecular-dynamics analysis.
+A residue is considered a candidate energetic hotspot when its mutation to alanine is predicted to destabilize the interface by a sufficiently large amount.
 
-Main software dependencies
+In this prototype, a positive mutation-induced energy change indicates that the native residue is predicted to contribute favourably to interface stability.
 
-The notebooks use Python scientific and structural-bioinformatics libraries, including:
+FoldX values are computational estimates and should not be interpreted as experimental binding free energies.
 
-* Python 3;
-* Jupyter Notebook;
-* NumPy;
-* pandas;
-* Matplotlib;
-* Biopython;
-* NetworkX;
-* scikit-learn;
-* FoldX.
+---
 
-FoldX is external software and must be installed separately. Its executable path may need to be configured manually according to the local operating system.
+## `03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb`
 
-Expected outputs
+This notebook searches the selected interface chain for contiguous peptide windows that retain important interface residues and energetic hotspots.
 
-Depending on the execution environment, the pipeline generates files such as:
+Main operations include:
 
-* interface-contact tables;
-* interface-residue lists;
-* graph-centrality statistics;
-* FoldX mutation-energy results;
-* energetic-hotspot tables;
-* ranked contiguous peptide windows;
-* the selected seed peptide;
-* generated peptide variants;
-* pre-docking candidate rankings;
-* CSV reports and diagnostic plots.
+- construction of contiguous peptide windows;
+- comparison of alternative window positions;
+- ranking using structural, graph-based and energetic information;
+- selection of a reference seed peptide;
+- annotation of interface and hotspot positions within the seed;
+- generation of conservative local sequence variants;
+- preservation of important residues where required;
+- candidate deduplication;
+- sequence-level and pre-docking scoring;
+- export of the seed and generated candidates.
 
-Most intermediate results are written to an outputs/ directory created by the notebooks.
+The initial prototype selected a 30-residue seed peptide from chain `D`:
 
-Scientific interpretation
+    YIEALDKYACNCVVGYIGERCQYRDLKWWE
 
-This directory documents an initial PEARL prototype.
+The generated candidates are local sequence variants of this seed. They should be interpreted as computational hypotheses rather than validated peptide binders.
 
-The workflow provides a computational strategy for prioritizing residues, peptide windows, and candidate sequences. However:
+The `FIXED` suffix indicates that this notebook contains corrections and stabilized logic relative to earlier development versions.
 
-* contact count alone does not establish biological relevance;
-* FoldX energies are computational estimates;
-* graph centrality is a structural prioritization criterion, not direct experimental evidence;
-* generated peptide candidates are hypotheses;
-* pre-docking scores do not demonstrate binding;
-* the candidates require further structural and experimental validation.
+---
 
-Subsequent PEARL pipelines may revise the interface selection, candidate-generation procedure, FoldX evaluation, docking protocol, or final ranking.
+## `04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb`
 
-Relationship with later pipelines
+This notebook performs sequence-level quality control, validation and pre-docking ranking of the generated peptide candidates.
+
+Main operations include:
+
+- amino-acid sequence validation;
+- peptide-length consistency checks;
+- mutation counting;
+- candidate deduplication;
+- comparison with the original seed;
+- conservation of important interface positions;
+- hotspot-retention analysis;
+- physicochemical filtering;
+- calculation of composite pre-docking scores;
+- prioritization of candidates for downstream structural evaluation;
+- export of ranked candidate tables.
+
+The output is a reduced and ranked set of peptide candidates intended for subsequent structure-based evaluation using tools such as FoldX and Rosetta FlexPepDock.
+
+A favourable pre-docking score does not demonstrate binding. It only identifies candidates that satisfy the selected computational criteria better than others within the generated set.
+
+---
+
+## Main software dependencies
+
+The notebooks use scientific Python and structural-bioinformatics libraries, including:
+
+- Python 3;
+- Jupyter Notebook;
+- NumPy;
+- pandas;
+- Matplotlib;
+- Biopython;
+- NetworkX;
+- scikit-learn;
+- pathlib;
+- regular-expression utilities.
+
+### FoldX
+
+FoldX is used for computational alanine scanning and mutation-energy estimation.
+
+FoldX must be installed separately and its executable path may need to be configured manually according to the local operating system.
+
+Depending on the execution environment, FoldX may be:
+
+- executed directly from a notebook;
+- invoked through generated commands or scripts;
+- run manually outside Jupyter;
+- parsed after completion.
+
+---
+
+## Expected outputs
+
+Depending on the local execution environment, Pipeline 1 may generate:
+
+- inter-chain contact tables;
+- interface-residue lists;
+- chain-pair comparison tables;
+- interface contact matrices;
+- residue-level interface graphs;
+- graph-centrality statistics;
+- FoldX mutation-energy results;
+- energetic-hotspot tables;
+- ranked contiguous peptide windows;
+- the selected seed peptide;
+- generated local peptide variants;
+- mutation annotations;
+- pre-docking validation tables;
+- ranked peptide candidates;
+- diagnostic plots;
+- CSV reports.
+
+Most intermediate and final results are written to an `outputs/` directory created by the notebooks.
+
+Large generated files, temporary FoldX runs and external software installations should normally not be committed to the repository.
+
+---
+
+## Scientific interpretation
+
+This directory documents the initial PEARL computational prototype.
+
+The workflow provides a reproducible strategy for prioritizing:
+
+- candidate protein–protein interfaces;
+- structurally central residues;
+- energetic hotspots;
+- contiguous interface-derived peptide windows;
+- local peptide variants;
+- candidates for later structure-based evaluation.
+
+The following limitations should be considered:
+
+- contact count alone does not establish biological relevance;
+- biological-interface validation remains dependent on available structural annotations;
+- graph centrality is a structural prioritization criterion, not direct experimental evidence;
+- FoldX energies are approximate computational estimates;
+- alanine-scanning predictions are not experimental measurements;
+- a selected seed peptide is a design hypothesis;
+- generated peptide variants are not confirmed binders;
+- pre-docking scores do not demonstrate binding affinity;
+- peptide stability, solubility, selectivity and cellular activity are not established;
+- additional docking, molecular-dynamics and experimental validation are required.
+
+The final candidates should therefore be interpreted as ranked computational hypotheses rather than confirmed EGFR inhibitors.
+
+---
+
+## Relationship with Pipeline 2
+
+The second PEARL development stage is stored in:
+
+`pipeline_2_structural_validation_and_docking/`
+
+Pipeline 2 extends selected results from this initial prototype through two complementary directions:
+
+1. short hotspot-centred peptide design and structural refinement;
+2. CLEAR-inspired local peptide optimization followed by FoldX and Rosetta FlexPepDock validation.
 
 The notebook numbering in this directory applies only to Pipeline 1.
 
-Later notebooks stored in other pipeline directories represent subsequent stages or revised implementations and should not be interpreted as a direct continuation of the numbering used here.
+Notebook prefixes used in Pipeline 2 should not be interpreted as a direct continuation of the sequence reported here. The two directories represent distinct stages of methodological development.
 
-In particular, this initial prototype should remain reproducible and distinguishable from later workflows involving revised dataset construction, structural preparation, FoldX complex evaluation, Rosetta FlexPepDock refinement, or other post-meeting developments.
+Pipeline 1 should remain independently understandable and reproducible as the initial PEARL prototype.
 
-Project status
+---
 
-Status: initial research prototype
-Purpose: methodological development and preliminary candidate generation
-Validation level: computational, non-experimental
-Intended use: research and educational purposes
+## Directory structure
 
-Questo README chiarisce anche un punto importante: 01B non è semplicemente una variante del notebook 01, ma un passaggio di controllo della scelta biologica dell’interfaccia. In GitHub devi aprire README.md, cliccare sulla matita, sostituire il testo attuale e fare Commit changes.
+    pipeline_1_initial_prototype/
+    ├── README.md
+    ├── 01_EGFR_PDB_to_Interface_Graph.ipynb
+    ├── 01B_Biological_Interface_Validation.ipynb
+    ├── 02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED.ipynb
+    ├── 03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
+    └── 04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb
+
+---
+
+## Project status
+
+- **Stage:** initial PEARL computational prototype
+- **Scope:** interface identification, hotspot analysis, seed extraction, variant generation and pre-docking prioritization
+- **Validation level:** computational and non-experimental
+- **Purpose:** methodological development, research and academic presentation
