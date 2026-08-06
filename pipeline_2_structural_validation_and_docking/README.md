@@ -11,16 +11,17 @@ This directory therefore represents a broader experimental and methodological
 pipeline rather than a simple numerical continuation of Pipeline 1.
 
 This second pipeline contains:
+## Notebooks included
 
-02c_Hotspot_Centered_Peptide_Library.ipynb
-02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
-03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
-03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
-04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
-04d_CLEAR_Peptide_Oracle_Training.ipynb
-04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
-05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
-05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
+- `02c_Hotspot_Centered_Peptide_Library.ipynb`
+- `02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb`
+- `03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb`
+- `03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb`
+- `04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb`
+- `04d_CLEAR_Peptide_Oracle_Training.ipynb`
+- `04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb`
+- `05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb`
+- `05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb`
 ---
 ## Relationship with Pipeline 1
 
@@ -45,8 +46,7 @@ pre-docking ranking
 
 ## Pipeline 2 extends this work through:
 
-interface subgraph analysis
-    ↓
+ 
 hotspot-centred and short-peptide design
     ↓
 structural and energetic ranking
@@ -304,19 +304,8 @@ not always be executed as one uninterrupted sequence.
     ↓
 03d_Top3_FlexPepDock_Deep_Refinement_N20
 
-## Branch 2 — Contiguous seed and generated peptide variants
 
- 
-04b_Candidate_Validation_PreDocking_EnergeticHotspots
-    ↓
-05b_Structural_Preparation_Seed_and_Candidates_FoldX
-    ↓
-06b_Guided_Peptide_Docking_and_Interface_Evaluation
-
-For the corrected hotspot-aware workflow, Notebook 03b should generally be
-preferred over Notebook 03.
-
-## Branch 3 — CLEAR-inspired counterfactual peptide optimization
+## Branch 2 — CLEAR-inspired counterfactual peptide optimization
 
 04c_CLEAR_Local_Peptide_Variant_Dataset
     ↓
@@ -369,12 +358,10 @@ for manual execution.
 
 Depending on the selected branch, the pipeline may generate:
 
-* interface-subgraph tables;
+ 
 * hotspot-centred peptide libraries;
-* ranked short-peptide candidates;
-* contiguous peptide-window rankings;
+* ranked short-peptide candidates; 
 * conservative sequence variants;
-* pre-docking validation tables;
 * CLEAR local variant datasets;
 * trained peptide-oracle models;
 * counterfactual peptide candidates;
@@ -453,8 +440,6 @@ pipeline_2_structural_validation_and_docking/
 ├── 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb 
 
 ├── 03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb 
-
-├── 04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb 
 
 ├── 04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb 
 
