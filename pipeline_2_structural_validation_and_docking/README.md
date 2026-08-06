@@ -1,43 +1,5 @@
-Dallo screenshot, la seconda fase è molto più ampia dei soli notebook 04c, 05b e 06b: comprende la ricerca di sotto-interfacce, la progettazione di peptidi più corti, il docking, la pipeline CLEAR, FoldX e FlexPepDock.
-
-Perciò manterrei il nome:
-
-pipeline_2_structural_validation_and_docking
-
-e inserirei questi notebook, lasciando inalterati i nomi attuali:
-
-02_Interface_Subgraph_Search.ipynb
-02c_Hotspot_Centered_Peptide_Library.ipynb
-02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
-03_Contiguous_Peptide_Window_Diffusion.ipynb
-03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
-03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
-03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
-04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb
-04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
-04d_CLEAR_Peptide_Oracle_Training.ipynb
-04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
-05b_Structural_Preparation_Seed_and_Candidates_FoldX.ipynb
-05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
-05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
-06b_Guided_Peptide_Docking_and_Interface_Evaluation.ipynb
-
-Non inserirei:
-
-7_Uncertainty_regularization_and_the_deep_learning_toolset.ipynb
-ChEMBL_CLEAR_variational_graphautoencoder_perturbations-....ipynb
-
-perché, dai nomi, sembrano rispettivamente un notebook didattico generale e il precedente progetto CLEAR sulle molecole ChEMBL, non componenti dirette della pipeline PEARL.
-
-README consigliato
-
-Crea:
-
-pipeline_2_structural_validation_and_docking/README.md
-
-e incolla questo contenuto:
-
 # PEARL Pipeline 2 — Structural Validation, CLEAR Optimization and Peptide Docking
+
 This directory contains the second-stage computational development of the
 PEARL project.
 The notebooks were developed after the initial PEARL prototype in order to
@@ -47,13 +9,23 @@ more extensive structural and energetic validation using FoldX and Rosetta
 FlexPepDock.
 This directory therefore represents a broader experimental and methodological
 pipeline rather than a simple numerical continuation of Pipeline 1.
+
+This second pipeline contains:
+
+02c_Hotspot_Centered_Peptide_Library.ipynb
+02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
+03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
+03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
+04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
+04d_CLEAR_Peptide_Oracle_Training.ipynb
+04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
+05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
+05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
 ---
 ## Relationship with Pipeline 1
-The initial PEARL prototype is stored in:
-```text
-pipeline_1_initial_prototype/
 
-Pipeline 1 provides the first implementation of the workflow:
+
+## Pipeline 1 provides the first implementation of the workflow:
 
 EGFR structure
     ↓
@@ -71,7 +43,7 @@ candidate generation
     ↓
 pre-docking ranking
 
-Pipeline 2 extends this work through:
+## Pipeline 2 extends this work through:
 
 interface subgraph analysis
     ↓
@@ -114,33 +86,7 @@ of peptide binding or inhibition.
 
 ⸻
 
-Notebook groups
-
-The notebooks are organized into five related methodological groups.
-
-⸻
-
-A. Interface-subgraph and hotspot-centred peptide design
-
-02_Interface_Subgraph_Search.ipynb
-
-Explores the selected protein–protein interface at the residue-subgraph level.
-
-Main objectives include:
-
-* analysis of local interface subgraphs;
-* identification of connected or structurally coherent residue regions;
-* comparison of alternative interface-derived peptide regions;
-* integration of contact, centrality and hotspot information;
-* identification of candidate regions that may be shorter or more focused than
-    the original contiguous seed.
-
-This notebook investigates whether the complete initial seed can be reduced to
-smaller structurally meaningful interface regions.
-
-⸻
-
-02c_Hotspot_Centered_Peptide_Library.ipynb
+## 02c_Hotspot_Centered_Peptide_Library.ipynb
 
 Constructs a library of peptide sequences centred around important interface
 hotspots.
@@ -159,7 +105,7 @@ be experimentally active.
 
 ⸻
 
-02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
+## 02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
 
 Ranks shorter interface-derived peptides using structural and energetic
 criteria.
@@ -180,26 +126,7 @@ of the original interface signal.
 
 ⸻
 
-B. Contiguous-window generation and docking of short peptides
-
-03_Contiguous_Peptide_Window_Diffusion.ipynb
-
-Implements the initial contiguous-window and sequence-generation workflow.
-
-Main operations include:
-
-* extraction of contiguous peptide windows;
-* definition of a reference seed;
-* generation of local sequence variants;
-* sequence-level candidate scoring;
-* preliminary candidate prioritization.
-
-This notebook represents an earlier or exploratory version of the candidate
-generation procedure.
-
-⸻
-
-03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
+## 03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
 
 Extends and corrects the contiguous-window workflow by explicitly integrating
 energetic-hotspot information.
@@ -218,7 +145,7 @@ stabilized logic relative to earlier versions.
 
 ⸻
 
-03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
+## 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
 
 Prepares selected short peptides for receptor–peptide structural evaluation.
 
@@ -237,7 +164,7 @@ structural evaluation.
 
 ⸻
 
-03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
+## 03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
 
 Performs deeper Rosetta FlexPepDock refinement for the top three selected
 short-peptide candidates.
@@ -261,31 +188,7 @@ binding.
 
 ⸻
 
-C. Candidate validation and CLEAR-inspired sequence optimization
-
-04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb
-
-Performs sequence-level and pre-docking validation of generated peptide
-candidates.
-
-Main operations include:
-
-* amino-acid sequence validation;
-* sequence-length consistency;
-* mutation counting;
-* comparison with the reference seed;
-* hotspot-retention analysis;
-* physicochemical filtering;
-* candidate deduplication;
-* calculation of composite pre-docking scores;
-* export of a prioritized candidate subset.
-
-This notebook provides candidate quality control before expensive structural
-calculations.
-
-⸻
-
-04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
+## 04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
 
 Constructs a structured local peptide-variant dataset for the CLEAR-inspired
 workflow.
@@ -311,7 +214,7 @@ small molecular graphs.
 
 ⸻
 
-04d_CLEAR_Peptide_Oracle_Training.ipynb
+## 04d_CLEAR_Peptide_Oracle_Training.ipynb
 
 Trains a predictive peptide oracle using the local variant dataset.
 
@@ -334,7 +237,7 @@ the quality and coverage of the training dataset.
 
 ⸻
 
-04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
+## 04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
 
 Uses the trained peptide oracle to generate and prioritize local
 counterfactual peptide candidates.
@@ -360,33 +263,7 @@ candidates must be re-evaluated using explicit structural tools.
 
 ⸻
 
-D. FoldX validation and Rosetta refinement of seed, generated candidates and CLEAR candidates
-
-05b_Structural_Preparation_Seed_and_Candidates_FoldX.ipynb
-
-Prepares the reference seed and selected generated candidates for FoldX and
-Rosetta evaluation.
-
-Main operations include:
-
-* loading the receptor structure;
-* preparing seed and candidate peptide complexes;
-* checking receptor and peptide chain assignments;
-* generating candidate-specific PDB files;
-* preparing FoldX AnalyseComplex commands;
-* parsing individual and interaction-energy output files;
-* preparing Rosetta FlexPepDock input structures and scripts.
-
-FoldX may be run directly when detected or through generated shell commands.
-
-Typical FoldX outputs include:
-
-Interaction_<candidate>_AC.fxout
-Indiv_energies_<candidate>_AC.fxout
-
-⸻
-
-05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
+## 05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
 
 Validates CLEAR-generated counterfactual peptides using explicit structural and
 FoldX calculations.
@@ -408,7 +285,7 @@ oracle-guided counterfactual optimization.
 
 ⸻
 
-05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
+## 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
 
 Performs Rosetta FlexPepDock refinement of the counterfactual candidates that
 passed the FoldX and structural-validation stage.
@@ -429,35 +306,13 @@ should normally be run after Notebook 05c.
 
 ⸻
 
-E. Integrated guided docking and interface evaluation
 
-06b_Guided_Peptide_Docking_and_Interface_Evaluation.ipynb
-
-Integrates guided docking results and evaluates receptor–peptide interfaces.
-
-Main operations may include:
-
-* loading prepared receptor–peptide complexes;
-* collecting FoldX and Rosetta results;
-* comparing seed and candidate structures;
-* evaluating peptide placement at the target interface;
-* analysing receptor–peptide contacts;
-* checking hotspot engagement;
-* examining structural deviations;
-* calculating or collecting interface-related metrics;
-* producing a final candidate comparison and ranking.
-
-The final prioritization should consider several complementary criteria rather
-than relying on a single score.
-
-⸻
-
-Recommended execution logic
+## Recommended execution logic
 
 Pipeline 2 contains alternative and complementary branches. It should therefore
 not always be executed as one uninterrupted sequence.
 
-Branch 1 — Short hotspot-centred peptides
+## Branch 1 — Short hotspot-centred peptides
 
 02_Interface_Subgraph_Search
     ↓
@@ -469,7 +324,7 @@ Branch 1 — Short hotspot-centred peptides
     ↓
 03d_Top3_FlexPepDock_Deep_Refinement_N20
 
-Branch 2 — Contiguous seed and generated peptide variants
+## Branch 2 — Contiguous seed and generated peptide variants
 
 03_Contiguous_Peptide_Window_Diffusion
         or
@@ -484,7 +339,7 @@ Branch 2 — Contiguous seed and generated peptide variants
 For the corrected hotspot-aware workflow, Notebook 03b should generally be
 preferred over Notebook 03.
 
-Branch 3 — CLEAR-inspired counterfactual peptide optimization
+## Branch 3 — CLEAR-inspired counterfactual peptide optimization
 
 04c_CLEAR_Local_Peptide_Variant_Dataset
     ↓
@@ -501,9 +356,9 @@ docking-based evaluation.
 
 ⸻
 
-External software
+## External software
 
-FoldX
+# FoldX
 
 FoldX is used for:
 
@@ -518,7 +373,7 @@ configured manually.
 
 ⸻
 
-Rosetta FlexPepDock
+# Rosetta FlexPepDock
 
 Rosetta FlexPepDock is used for high-resolution peptide–protein refinement.
 
@@ -533,7 +388,7 @@ for manual execution.
 
 ⸻
 
-Expected outputs
+## Expected outputs
 
 Depending on the selected branch, the pipeline may generate:
 
@@ -565,7 +420,7 @@ should normally not be committed to the GitHub repository.
 
 ⸻
 
-Interpretation and limitations
+## Interpretation and limitations
 
 This pipeline produces computational hypotheses.
 
@@ -609,24 +464,17 @@ Project status
     presentation
 
 ## Struttura della cartella
-Dopo il caricamento avrai quindi:
-```text
+ 
 pipeline_2_structural_validation_and_docking/
 ├── README.md
-├── 02_Interface_Subgraph_Search.ipynb
 ├── 02c_Hotspot_Centered_Peptide_Library.ipynb
 ├── 02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
-├── 03_Contiguous_Peptide_Window_Diffusion.ipynb
-├── 03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
 ├── 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
 ├── 03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
 ├── 04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb
 ├── 04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
 ├── 04d_CLEAR_Peptide_Oracle_Training.ipynb
 ├── 04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
-├── 05b_Structural_Preparation_Seed_and_Candidates_FoldX.ipynb
 ├── 05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
 ├── 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
-└── 06b_Guided_Peptide_Docking_and_Interface_Evaluation.ipynb
 
-Il vantaggio di questo README è che non presenta erroneamente tutti i notebook come una sola catena: distingue le tre diramazioni sperimentali sviluppate per il secondo incontro.
