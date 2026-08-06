@@ -468,14 +468,25 @@ Project status
 pipeline_2_structural_validation_and_docking/
 
 ├── README.md 
+
 ├── 02c_Hotspot_Centered_Peptide_Library.ipynb 
+
 ├── 02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb 
+
 ├── 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb 
+
 ├── 03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb 
+
 ├── 04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb 
+
 ├── 04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb 
+
 ├── 04d_CLEAR_Peptide_Oracle_Training.ipynb 
+
 ├── 04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb 
+
 ├── 05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb 
+
 ├── 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb 
+
 
