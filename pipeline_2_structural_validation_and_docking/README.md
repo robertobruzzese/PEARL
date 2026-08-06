@@ -1,453 +1,466 @@
 # PEARL Pipeline 2 — Structural Validation, CLEAR Optimization and Peptide Docking
 
-This directory contains the second-stage computational development of the
-PEARL project.
-The notebooks were developed after the initial PEARL prototype in order to
-explore alternative interface-derived peptides, improve candidate generation,
-introduce a CLEAR-inspired counterfactual optimization workflow, and perform
-more extensive structural and energetic validation using FoldX and Rosetta
-FlexPepDock.
-This directory therefore represents a broader experimental and methodological
-pipeline rather than a simple numerical continuation of Pipeline 1.
+This directory contains the second-stage computational development of the PEARL project.
 
-This second pipeline contains:
+The notebooks included here were developed after the initial PEARL prototype in order to explore two complementary strategies:
+
+1. the design and structural evaluation of short hotspot-centred peptides;
+2. the generation and validation of CLEAR-inspired counterfactual peptide candidates.
+
+Pipeline 2 is therefore not a simple numerical continuation of Pipeline 1. It represents a separate stage of methodological development focused on peptide miniaturization, local sequence optimization, FoldX evaluation and Rosetta FlexPepDock refinement.
+
+---
+
+## Relationship with Pipeline 1
+
+The initial PEARL prototype is stored in `pipeline_1_initial_prototype/`.
+
+Pipeline 1 provides the first implementation of the workflow:
+
+    EGFR structure
+        ↓
+    interface identification
+        ↓
+    biological-interface validation
+        ↓
+    FoldX alanine scanning
+        ↓
+    energetic-hotspot identification
+        ↓
+    seed-peptide extraction
+        ↓
+    candidate generation
+        ↓
+    pre-docking prioritization
+
+Pipeline 2 starts from selected structural and sequence information obtained during the first stage and extends the project through two complementary computational branches.
+
+### Branch 1 — Short hotspot-centred peptides
+
+    hotspot-centred peptide library
+        ↓
+    structural and energetic ranking
+        ↓
+    guided peptide docking
+        ↓
+    Rosetta FlexPepDock refinement
+
+### Branch 2 — CLEAR-inspired peptide optimization
+
+    local peptide-variant dataset construction
+        ↓
+    peptide-oracle training
+        ↓
+    CLEAR-inspired counterfactual optimization
+        ↓
+    FoldX structural validation
+        ↓
+    Rosetta FlexPepDock refinement
+
+---
+
+## Biological system
+
+- **Target:** Epidermal Growth Factor Receptor, EGFR
+- **Reference structure:** PDB `3NJP`
+- **Initial interface studied:** chains `B–D`
+- **Reference peptide source:** contiguous regions extracted from the selected protein–protein interface
+- **Main objective:** identify and structurally prioritize peptide candidates capable of retaining important interface interactions
+
+The analyses contained in this directory are computational and do not constitute experimental evidence of peptide binding, inhibition or biological activity.
+
+---
+
 ## Notebooks included
+
+### Short-peptide branch
 
 - `02c_Hotspot_Centered_Peptide_Library.ipynb`
 - `02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb`
 - `03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb`
 - `03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb`
+
+### CLEAR-inspired branch
+
 - `04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb`
 - `04d_CLEAR_Peptide_Oracle_Training.ipynb`
 - `04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb`
 - `05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb`
 - `05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb`
+
+The notebook names are preserved as originally developed.
+
+Prefixes such as `02c`, `03d`, `04e` and `05d` reflect the chronological and experimental development of the work. They do not indicate one single mandatory linear sequence across the whole directory.
+
 ---
-## Relationship with Pipeline 1
 
+# Branch 1 — Short Hotspot-Centred Peptide Design
 
-## Pipeline 1 provides the first implementation of the workflow:
+## `02c_Hotspot_Centered_Peptide_Library.ipynb`
 
-EGFR structure
-    ↓
-interface identification
-    ↓
-biological-interface validation
-    ↓
-FoldX alanine scanning
-    ↓
-energetic-hotspot identification
-    ↓
-seed-peptide extraction
-    ↓
-candidate generation
-    ↓
-pre-docking ranking
-
-## Pipeline 2 extends this work through:
-
- 
-hotspot-centred and short-peptide design
-    ↓
-structural and energetic ranking
-    ↓
-guided peptide docking
-    ↓
-local peptide-variant dataset construction
-    ↓
-peptide-oracle training
-    ↓
-CLEAR-inspired counterfactual optimization
-    ↓
-FoldX structural validation
-    ↓
-Rosetta FlexPepDock refinement
-    ↓
-integrated candidate evaluation
-
-Some notebooks revisit or improve analyses introduced in Pipeline 1.
-For this reason, the notebook prefixes should not be interpreted as one
-strictly linear execution sequence.
-
-⸻
-
-Biological system
-
-* Target: Epidermal Growth Factor Receptor, EGFR
-* Reference structure: PDB 3NJP
-* Initial interface studied: chains B–D
-* Reference peptide source: contiguous regions extracted from the selected
-    protein–protein interface
-* Main objective: identify and structurally prioritize peptide candidates
-    capable of reproducing important interface interactions
-
-The analyses remain computational and do not constitute experimental evidence
-of peptide binding or inhibition.
-
-⸻
-
-## 02c_Hotspot_Centered_Peptide_Library.ipynb
-
-Constructs a library of peptide sequences centred around important interface
-hotspots.
+This notebook constructs a library of short peptide sequences centred around important interface hotspots.
 
 Main operations include:
 
-* selection of energetic or structurally central hotspot residues;
-* construction of peptide windows around those residues;
-* generation of peptides with different lengths and boundaries;
-* annotation of hotspot coverage;
-* comparison with the original seed peptide;
-* creation of a candidate library for subsequent ranking.
+- selection of structurally or energetically important interface residues;
+- definition of peptide windows around hotspot positions;
+- generation of peptides with different lengths and boundaries;
+- annotation of hotspot coverage;
+- comparison with the original interface-derived peptide;
+- creation of a candidate library for subsequent ranking.
 
-The resulting sequences are candidate peptide hypotheses and are not assumed to
-be experimentally active.
+The resulting sequences are computational peptide hypotheses and are not assumed to be experimentally active.
 
-⸻
+---
 
-## 02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
+## `02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb`
 
-Ranks shorter interface-derived peptides using structural and energetic
-criteria.
+This notebook ranks the short hotspot-centred peptides using structural and energetic criteria.
 
-Possible criteria include:
+Possible ranking criteria include:
 
-* number of retained interface residues;
-* number of retained energetic hotspots;
-* contact coverage;
-* graph-based importance;
-* FoldX-derived energetic information;
-* peptide length;
-* structural compactness;
-* sequence and physicochemical properties.
+- retained interface residues;
+- retained hotspot positions;
+- contact coverage;
+- graph-based residue importance;
+- energetic contribution;
+- peptide length;
+- structural coherence;
+- physicochemical properties.
 
-The purpose is to identify shorter candidates that preserve a substantial part
-of the original interface signal.
+The purpose is to identify shorter candidates that preserve a relevant fraction of the original interface signal.
 
-⸻
+---
 
-## 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
+## `03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb`
 
-Prepares selected short peptides for receptor–peptide structural evaluation.
-
-Main operations may include:
-
-* extraction or construction of receptor–peptide complexes;
-* assignment of receptor and peptide chains;
-* structural consistency checks;
-* preparation of docking inputs;
-* generation of guided docking configurations;
-* definition of restraints or starting peptide positions;
-* execution or preparation of FoldX and Rosetta calculations.
-
-This notebook connects short-peptide selection with explicit three-dimensional
-structural evaluation.
-
-⸻
-
-## 03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
-
-Performs deeper Rosetta FlexPepDock refinement for the top three selected
-short-peptide candidates.
-
-The N20 designation indicates that multiple structural models or decoys are
-generated for each candidate, typically with:
-
-nstruct = 20
+This notebook prepares selected short peptides for explicit receptor–peptide structural evaluation.
 
 Main operations include:
 
-* selection of the top three peptide complexes;
-* high-resolution peptide–protein refinement;
-* generation of multiple docking decoys;
-* parsing of Rosetta score files;
-* comparison of the best-scoring models;
-* inspection of score distributions and structural convergence.
+- loading the receptor structure;
+- preparing receptor–peptide complexes;
+- assigning receptor and peptide chains;
+- checking structural consistency;
+- generating docking input structures;
+- defining guided docking configurations;
+- preparing FoldX or Rosetta calculations;
+- organizing candidate-specific run directories and outputs.
 
-The best numerical Rosetta score should not be interpreted alone as proof of
-binding.
+This notebook connects peptide ranking with three-dimensional structural evaluation.
 
-⸻
+---
 
-## 04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
+## `03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb`
 
-Constructs a structured local peptide-variant dataset for the CLEAR-inspired
-workflow.
+This notebook performs deeper Rosetta FlexPepDock refinement for the top three selected short-peptide candidates.
 
-Main operations include:
-
-* definition of the reference seed;
-* generation or collection of local peptide variants;
-* enforcement of mutation and locality constraints;
-* assignment of candidate and chunk identifiers;
-* preparation of FoldX runs;
-* parsing of FoldX difference-energy files;
-* association of peptide sequences with energetic labels;
-* construction of a consolidated machine-learning dataset;
-* validation of completed, missing or failed calculations.
-
-In this pipeline, CLEAR principles are adapted to peptide sequences by requiring
-counterfactual candidates to remain local, constrained and interpretable with
-respect to the reference seed.
-
-This is not identical to the original graph-based CLEAR implementation for
-small molecular graphs.
-
-⸻
-
-## 04d_CLEAR_Peptide_Oracle_Training.ipynb
-
-Trains a predictive peptide oracle using the local variant dataset.
-
-The oracle is intended to approximate an energetic or structural target derived
-from the computed peptide variants.
-
-Main operations may include:
-
-* loading and cleaning the variant dataset;
-* encoding peptide sequences;
-* defining training, validation and test partitions;
-* training a predictive model;
-* monitoring loss and validation performance;
-* evaluating prediction errors;
-* saving the trained model and preprocessing objects;
-* determining whether the model is sufficiently reliable for optimization.
-
-The oracle is a computational surrogate and its predictions remain dependent on
-the quality and coverage of the training dataset.
-
-⸻
-
-## 04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
-
-Uses the trained peptide oracle to generate and prioritize local
-counterfactual peptide candidates.
-
-Main objectives include:
-
-* starting from the reference seed;
-* proposing a limited number of sequence substitutions;
-* preserving protected or hotspot positions where required;
-* optimizing the predicted target property;
-* penalizing excessive or non-local sequence changes;
-* generating interpretable counterfactual sequences;
-* comparing optimized candidates with the original peptide;
-* exporting candidates for FoldX and docking validation.
-
-A counterfactual candidate should answer a question such as:
-
-What is the smallest admissible sequence modification predicted to improve
-the selected energetic or structural property?
-
-The oracle prediction is not treated as final validation. Counterfactual
-candidates must be re-evaluated using explicit structural tools.
-
-⸻
-
-## 05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
-
-Validates CLEAR-generated counterfactual peptides using explicit structural and
-FoldX calculations.
-
-Main operations may include:
-
-* loading counterfactual sequences generated in Notebook 04e;
-* mapping mutations onto the peptide structure;
-* constructing receptor–counterfactual complexes;
-* structural integrity checks;
-* FoldX complex-energy evaluation;
-* comparison with the original seed;
-* comparison with conventionally generated candidates;
-* rejection of structurally invalid or energetically unfavourable candidates;
-* prioritization of candidates for Rosetta refinement.
-
-This notebook acts as the first structure-based validation layer after
-oracle-guided counterfactual optimization.
-
-⸻
-
-## 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
-
-Performs Rosetta FlexPepDock refinement of the counterfactual candidates that
-passed the FoldX and structural-validation stage.
+The `N20` designation indicates that multiple structural models are generated for each candidate, typically using `nstruct = 20`.
 
 Main operations include:
 
-* selection of validated CLEAR counterfactuals;
-* preparation of FlexPepDock runs;
-* generation of multiple refined receptor–peptide structures;
-* parsing of Rosetta score files;
-* comparison with the reference seed and non-CLEAR candidates;
-* evaluation of docking-score distributions;
-* inspection of final peptide poses;
-* prioritization of structurally plausible counterfactual candidates.
+- selection of the top three peptide complexes;
+- high-resolution peptide–protein refinement;
+- generation of multiple structural decoys;
+- parsing of Rosetta score files;
+- comparison of the best-scoring models;
+- inspection of score distributions;
+- evaluation of structural convergence.
 
-This notebook provides a more computationally expensive validation step and
-should normally be run after Notebook 05c.
+The best Rosetta score should not be interpreted alone as proof of peptide binding.
 
-⸻
+---
 
+# Branch 2 — CLEAR-Inspired Peptide Optimization
+
+## `04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb`
+
+This notebook constructs a structured local peptide-variant dataset around the reference seed sequence.
+
+Main operations include:
+
+- definition of the reference seed;
+- generation or collection of local peptide variants;
+- enforcement of sequence-locality constraints;
+- definition of mutable and protected peptide positions;
+- assignment of candidate identifiers;
+- organization of variants into chunks;
+- preparation of FoldX calculations;
+- parsing of energetic output files;
+- association of peptide sequences with computed labels;
+- construction of a consolidated machine-learning dataset;
+- validation of completed, missing or failed calculations.
+
+In this pipeline, CLEAR principles are adapted to peptide sequences by requiring candidate variants to remain local, constrained and interpretable with respect to the reference peptide.
+
+This workflow is inspired by the general logic of CLEAR, but it is not identical to the original graph-counterfactual framework for small molecular graphs.
+
+---
+
+## `04d_CLEAR_Peptide_Oracle_Training.ipynb`
+
+This notebook trains a predictive peptide oracle using the local peptide-variant dataset.
+
+The oracle is intended to approximate a structural or energetic target associated with the generated peptide variants.
+
+Main operations include:
+
+- loading and cleaning the peptide dataset;
+- sequence encoding;
+- definition of training, validation and test partitions;
+- model training;
+- monitoring of training and validation loss;
+- prediction-error analysis;
+- model selection;
+- saving the trained oracle and preprocessing objects;
+- assessment of whether the oracle is sufficiently reliable for optimization.
+
+The oracle is a computational surrogate model. Its predictions depend on the quality, size and coverage of the underlying dataset.
+
+---
+
+## `04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb`
+
+This notebook uses the trained peptide oracle to generate local counterfactual peptide candidates.
+
+The objective is to identify limited and interpretable sequence modifications that improve the target predicted by the oracle.
+
+Main operations include:
+
+- starting from the reference peptide;
+- proposing a limited number of amino-acid substitutions;
+- preserving protected or hotspot positions when required;
+- enforcing locality and mutation constraints;
+- optimizing the predicted target property;
+- penalizing excessive sequence changes;
+- generating interpretable counterfactual candidates;
+- comparing optimized sequences with the original peptide;
+- exporting candidates for explicit structural validation.
+
+A counterfactual candidate can be interpreted as an answer to the question:
+
+> What is the smallest admissible sequence modification predicted to improve the selected structural or energetic property?
+
+Oracle predictions are not treated as final evidence. Counterfactual candidates must be validated using explicit structural calculations.
+
+---
+
+## `05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb`
+
+This notebook validates CLEAR-generated counterfactual peptides using FoldX and explicit structural checks.
+
+Main operations include:
+
+- loading counterfactual sequences generated in Notebook `04e`;
+- mapping mutations onto the peptide structure;
+- constructing receptor–counterfactual complexes;
+- checking structural integrity;
+- preparing FoldX calculations;
+- evaluating receptor–peptide interaction energies;
+- comparing counterfactuals with the original reference peptide;
+- rejecting structurally invalid or energetically unfavourable candidates;
+- prioritizing candidates for Rosetta refinement.
+
+This notebook represents the first structure-based validation stage after oracle-guided optimization.
+
+---
+
+## `05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb`
+
+This notebook performs Rosetta FlexPepDock refinement of the CLEAR counterfactual candidates that passed the previous structural and FoldX validation stage.
+
+Main operations include:
+
+- selection of validated counterfactual peptides;
+- preparation of Rosetta FlexPepDock runs;
+- generation of multiple refined receptor–peptide structures;
+- parsing of Rosetta score files;
+- comparison with the reference peptide;
+- analysis of score distributions;
+- inspection of final peptide poses;
+- prioritization of structurally plausible counterfactual candidates.
+
+This stage provides a more computationally expensive validation layer and should normally be performed after Notebook `05c`.
+
+---
 
 ## Recommended execution logic
 
-Pipeline 2 contains alternative and complementary branches. It should therefore
-not always be executed as one uninterrupted sequence.
+Pipeline 2 contains two complementary branches and should not be interpreted as one uninterrupted notebook sequence.
 
-## Branch 1 — Short hotspot-centred peptides
+### Branch 1 — Short hotspot-centred peptides
 
- 
-02c_Hotspot_Centered_Peptide_Library
-    ↓
-02d_Short_Peptide_Structural_and_Energetic_Ranking
-    ↓
-03c_Short_Peptide_Structural_Preparation_and_Guided_Docking
-    ↓
-03d_Top3_FlexPepDock_Deep_Refinement_N20
+    02c_Hotspot_Centered_Peptide_Library
+        ↓
+    02d_Short_Peptide_Structural_and_Energetic_Ranking
+        ↓
+    03c_Short_Peptide_Structural_Preparation_and_Guided_Docking
+        ↓
+    03d_Top3_FlexPepDock_Deep_Refinement_N20
 
+### Branch 2 — CLEAR-inspired counterfactual peptide optimization
 
-## Branch 2 — CLEAR-inspired counterfactual peptide optimization
+    04c_CLEAR_Local_Peptide_Variant_Dataset
+        ↓
+    04d_CLEAR_Peptide_Oracle_Training
+        ↓
+    04e_CLEAR_Peptide_Counterfactual_Optimization
+        ↓
+    05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation
+        ↓
+    05d_CLEAR_Counterfactual_FlexPepDock_Refinement
 
-04c_CLEAR_Local_Peptide_Variant_Dataset
-    ↓
-04d_CLEAR_Peptide_Oracle_Training
-    ↓
-04e_CLEAR_Peptide_Counterfactual_Optimization
-    ↓
-05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation
-    ↓
-05d_CLEAR_Counterfactual_FlexPepDock_Refinement
+The two branches provide complementary strategies for peptide design and structural prioritization.
 
-The three branches can ultimately be compared through structural, energetic and
-docking-based evaluation.
+The first branch investigates peptide miniaturization around interface hotspots.
 
-⸻
+The second branch investigates local, interpretable and model-guided peptide optimization.
+
+---
 
 ## External software
 
-# FoldX
+### FoldX
 
 FoldX is used for:
 
-* energetic hotspot calculations;
-* mutation-energy estimation;
-* receptor–peptide interaction analysis;
-* comparison of seed and candidate complexes;
-* validation of CLEAR-generated counterfactuals.
+- structural preparation;
+- receptor–peptide complex analysis;
+- interaction-energy estimation;
+- comparison of reference and candidate complexes;
+- validation of CLEAR-generated counterfactual peptides.
 
-FoldX must be installed separately and its executable path may need to be
-configured manually.
+FoldX must be installed separately and its executable path may need to be configured manually.
 
-⸻
+Depending on the notebook and execution environment, FoldX may be:
 
-# Rosetta FlexPepDock
+- executed directly from Python;
+- invoked through generated shell commands;
+- run manually outside the notebook;
+- parsed after completion.
+
+Typical output files may include:
+
+- `Interaction_<candidate>_AC.fxout`
+- `Indiv_energies_<candidate>_AC.fxout`
+
+### Rosetta FlexPepDock
 
 Rosetta FlexPepDock is used for high-resolution peptide–protein refinement.
 
 A valid Rosetta installation must provide:
 
-* the FlexPepDocking executable;
-* the Rosetta database;
-* binaries compatible with the local operating system.
+- the `FlexPepDocking` executable;
+- the Rosetta database;
+- binaries compatible with the local operating system.
 
-The notebooks may either run Rosetta directly or generate commands and scripts
-for manual execution.
+The notebooks may either execute Rosetta directly or generate scripts and commands for manual execution.
 
-⸻
+Typical refinement options may include:
+
+- `-pep_refine`
+- `-ex1`
+- `-ex2aro`
+- `-use_input_sc`
+- `-nstruct`
+
+---
+
+## Python dependencies
+
+The notebooks use standard scientific and structural-bioinformatics tools, including:
+
+- Python 3;
+- Jupyter Notebook;
+- NumPy;
+- pandas;
+- Matplotlib;
+- Biopython;
+- scikit-learn;
+- pathlib;
+- subprocess;
+- regular-expression utilities.
+
+Additional dependencies may be required according to the notebook and local environment.
+
+---
 
 ## Expected outputs
 
 Depending on the selected branch, the pipeline may generate:
 
- 
-* hotspot-centred peptide libraries;
-* ranked short-peptide candidates; 
-* conservative sequence variants;
-* CLEAR local variant datasets;
-* trained peptide-oracle models;
-* counterfactual peptide candidates;
-* FoldX input structures and energy files;
-* Rosetta docking scripts;
-* refined PDB structures;
-* Rosetta score files;
-* integrated candidate rankings;
-* diagnostic plots and CSV reports.
+- hotspot-centred peptide libraries;
+- ranked short-peptide candidates;
+- prepared receptor–peptide complexes;
+- guided-docking input files;
+- CLEAR local peptide-variant datasets;
+- trained peptide-oracle models;
+- counterfactual peptide candidates;
+- FoldX input structures;
+- FoldX interaction-energy files;
+- Rosetta FlexPepDock scripts;
+- refined PDB structures;
+- Rosetta score files;
+- structural and energetic candidate rankings;
+- diagnostic plots;
+- CSV reports.
 
-Generated data may be stored in directories such as:
+Generated files may be stored in directories such as:
 
-outputs/
-runs/
-foldx_runs/
-rosetta_runs/
+- `outputs/`
+- `runs/`
+- `foldx_runs/`
+- `rosetta_runs/`
 
-Large temporary files, external software and large docking-output collections
-should normally not be committed to the GitHub repository.
+Large temporary files, external software installations and extensive docking-output collections should normally not be committed to the repository.
 
-⸻
+---
 
 ## Interpretation and limitations
 
 This pipeline produces computational hypotheses.
 
-The following points should be considered:
+The following limitations should be considered:
 
-* interface contacts do not alone demonstrate biological relevance;
-* a predicted hotspot is not necessarily an experimentally confirmed hotspot;
-* FoldX energies are approximate computational estimates;
-* the peptide oracle is limited by its training dataset;
-* counterfactual improvement refers to the modelled target, not necessarily to
-    experimental affinity;
-* a favourable Rosetta score is not a binding-affinity measurement;
-* docking results depend on the starting pose and sampling procedure;
-* small score differences may not be biologically meaningful;
-* peptide stability, solubility, selectivity and cellular activity require
-    additional evaluation;
-* experimental validation is ultimately required.
+- a predicted hotspot is not necessarily an experimentally confirmed hotspot;
+- a valid peptide sequence is not necessarily stable or soluble;
+- FoldX energies are approximate computational estimates;
+- the peptide oracle is limited by its training dataset;
+- counterfactual improvement refers to the modelled target;
+- a favourable oracle prediction does not guarantee improved binding;
+- a favourable Rosetta score is not a binding-affinity measurement;
+- docking results depend on the starting pose and sampling protocol;
+- small score differences may not be biologically meaningful;
+- peptide selectivity, stability, toxicity and cellular activity are not established;
+- molecular-dynamics analysis may be required for further validation;
+- experimental validation is ultimately required.
 
-⸻
+The final candidates should therefore be interpreted as ranked structural hypotheses rather than confirmed inhibitors.
 
-Notebook naming
+---
 
-The notebook names are preserved as originally developed.
+## Directory structure
 
-Prefixes such as 02c, 03d, 04e and 05d reflect the chronological and
-experimental development of the work. They do not necessarily indicate a
-single mandatory linear sequence.
+    pipeline_2_structural_validation_and_docking/
+    ├── README.md
+    ├── 02c_Hotspot_Centered_Peptide_Library.ipynb
+    ├── 02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
+    ├── 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
+    ├── 03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
+    ├── 04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
+    ├── 04d_CLEAR_Peptide_Oracle_Training.ipynb
+    ├── 04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
+    ├── 05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
+    └── 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
 
-The execution paths described in this README should be used to understand the
-relationship between notebooks.
+---
 
-⸻
+## Project status
 
-Project status
-
-* Stage: second PEARL computational development phase
-* Scope: peptide miniaturization, candidate generation, CLEAR-inspired
-    optimization and structural validation
-* Validation level: computational and non-experimental
-* Intended use: research, methodological development and academic
-    presentation
-
-## Struttura della cartella
- 
-pipeline_2_structural_validation_and_docking/
-
-├── README.md 
-
-├── 02c_Hotspot_Centered_Peptide_Library.ipynb 
-
-├── 02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb 
-
-├── 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb 
-
-├── 03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb 
-
-├── 04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb 
-
-├── 04d_CLEAR_Peptide_Oracle_Training.ipynb 
-
-├── 04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb 
-
-├── 05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb 
+- **Stage:** second PEARL computational development phase
+- **Scope:** peptide miniaturization, CLEAR-inspired optimization and structural validation
+- **Validation level:** computational and non-experimental
+- **Purpose:** research, methodological development and academic presentation
 
 ├── 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb 
 
