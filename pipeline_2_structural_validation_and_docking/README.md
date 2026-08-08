@@ -501,5 +501,27 @@ The final candidates should therefore be interpreted as ranked structural hypoth
 - **Scope:** peptide miniaturization, CLEAR-inspired optimization and structural validation
 - **Validation level:** computational and non-experimental
 - **Purpose:** research, methodological development and academic presentation
+  
+## Optional VAE extension
+
+An experimental VAE-based extension is provided in:
+
+`vae_extension/`
+
+This branch implements a true latent-space counterfactual workflow:
+
+04c local peptide dataset
+→ 06a VAE training
+→ 06b latent-space validation
+→ 06c latent counterfactual optimization
+→ 06d comparison with Direct CLEAR
+
+The VAE extension is complementary to the consolidated
+Direct CLEAR workflow and does not replace notebooks 04c–05e.
+
+Direct CLEAR performs constrained peptide optimization directly
+in sequence/categorical space, whereas the VAE extension learns
+a continuous latent representation and performs counterfactual
+optimization in that latent space.
 
 
