@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="pipeline_4_protein_language_model_design/PEARL_pipeline_2_3_4_overview.png"
+  <img src="./PEARL_pipeline_2_3_4_overview.png"
        alt="PEARL integrated overview — Pipelines 2, 3 and 4"
        width="100%">
 </p>
