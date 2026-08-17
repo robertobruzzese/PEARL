@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="pipeline_4_protein_language_model_design/PEARL_pipeline_2_3_4_overview.png"
+       alt="PEARL integrated overview — Pipelines 2, 3 and 4"
+       width="100%">
+</p>
+
 # PEARL Pipeline 4 — Protein Language Models and AI-Guided Peptide Design
 
 This directory contains the protein-language-model and structure-conditioned peptide-design stage of the PEARL project.
