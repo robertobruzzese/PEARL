@@ -4,9 +4,6 @@
 Target: **EGFR kinase asymmetric dimer, PDB 3NJP**  
 Pipeline 5: **MD-derived pharmacophore → small-molecule generation/screening → chemistry filtering → DiffDock → Vina refinement → integrated lead selection**
 
-Repository folder:  
-https://github.com/robertobruzzese/PEARL/tree/main/pipeline_5_pharmacophore_and_small_molecule_leads
-
 ---
 
 ## Overview
