@@ -138,6 +138,14 @@ top 2 new candidates
 comparison with F0010 / CF06 / CF02
         ↓
 08f — MM/GBSA-like endpoint-energy comparison
+        ↓
+08g — ESMFold structural plausibility
+        ↓
+08h — solubility / developability screening
+        ↓
+08i — Bayesian optimisation framework
+        ↓
+08j — final multi-objective ranking
 ```
 
 ---
@@ -150,6 +158,10 @@ comparison with F0010 / CF06 / CF02
 - `08d_ProteinMPNN_Candidate_Structural_Validation.ipynb`
 - `08e_Top_ProteinMPNN_Lead_MD_Validation.ipynb`
 - `08f_ProteinMPNN_Endpoint_Energy_Comparison.ipynb`
+- `08g_ESMFold_Structural_Validation.ipynb`
+- `08h_Solubility_Developability_Screening.ipynb`
+- `08i_Bayesian_Optimisation_BoTorch.ipynb`
+- `08j_Final_Multi_Objective_Ranking.ipynb`
 
 ---
 
@@ -167,6 +179,14 @@ comparison with F0010 / CF06 / CF02
 08e_Top_ProteinMPNN_Lead_MD_Validation
         ↓
 08f_ProteinMPNN_Endpoint_Energy_Comparison
+        ↓
+08g_ESMFold_Structural_Validation
+        ↓
+08h_Solubility_Developability_Screening
+        ↓
+08i_Bayesian_Optimisation_BoTorch
+        ↓
+08j_Final_Multi_Objective_Ranking
 ```
 
 Notebooks `08a–08d` are primarily executed in the dedicated AI environment.
@@ -659,6 +679,65 @@ The reported values should therefore be interpreted as comparative energetic des
 
 ---
 
+
+## 08g–08j — Structural plausibility, developability and final decision support
+
+The final extension of Pipeline 4 adds four downstream modules after the 08f endpoint comparison. These modules use the two candidates actually advanced from 08d/08e:
+
+```text
+MPNN_NEW_01 = TGPRNQYRDLP
+MPNN_NEW_05 = IGPRHQYRDLP
+```
+
+### 08g — ESMFold structural plausibility
+
+08g imports external ColabFold/ESMFold PDB predictions and validates file integrity, sequence identity and residue count. Both candidates produced valid 11-residue structures. Mean pLDDT was 72.56 for MPNN_NEW_01 and 67.27 for MPNN_NEW_05. These values are reported only as structural-confidence descriptors. For short peptides, pLDDT, pTM, PAE and RMSD are uncertain and must not be interpreted as binding affinity or energetic evidence.
+
+### 08h — Solubility / developability screening
+
+08h performs a transparent sequence-derived triage. MPNN_NEW_01 has net charge proxy +1 and hydrophobic fraction 0.182; MPNN_NEW_05 has +2 and 0.273. The executed run did not include CamSol, so these are proxies rather than experimental or calibrated solubility predictions.
+
+### 08i — Bayesian optimisation framework
+
+08i harmonises endpoint energy, structural confidence and developability evidence. BoTorch was not available in the executed environment and only two candidates were observed. The notebook therefore does not fabricate a new sequence or claim a validated Gaussian-process posterior. A defensible Bayesian optimisation campaign requires a larger measured design set and explicit acquisition-function validation.
+
+### 08j — Final multi-objective ranking
+
+08j combines the available signals with equal, configurable weights. The resulting decision-support ranking is:
+
+```text
+1. MPNN_NEW_01  TGPRNQYRDLP
+2. MPNN_NEW_05  IGPRHQYRDLP
+```
+
+MPNN_NEW_05 remains the stronger ProteinMPNN lead in the endpoint-energy component and the static FoldX/Rosetta layer, while MPNN_NEW_01 has stronger short-timescale MD behaviour, higher mean pLDDT and lower hydrophobicity proxy. The final ordering is therefore a trade-off, not a universal biological winner.
+
+These four modules complete Pipeline 4 as an AI-guided peptide sequence-optimisation and computational prioritisation workflow. They do not replace biochemical binding, stability, solubility or cellular validation.
+
+### Additional outputs
+
+The 08g–08j modules may generate:
+
+- validated external ESMFold/ColabFold PDB files;
+- pLDDT, PAE and optional RMSD summaries;
+- PDB provenance and integrity QC;
+- sequence-derived developability tables and plots;
+- integrated evidence tables;
+- BoTorch availability and proposal-status reports;
+- exploratory and final multi-objective rankings;
+- sensitivity-ready score components;
+- Markdown reports and QC tables.
+
+The default output directories are:
+
+```text
+pipeline_4_ai_08g_esmfold_structural_validation/
+pipeline_4_ai_08h_solubility_developability/
+pipeline_4_ai_08i_bayesian_optimisation/
+pipeline_4_ai_08j_final_multiobjective/
+```
+
+
 # Cross-method interpretation
 
 Pipeline 4 intentionally separates several different concepts.
@@ -1092,7 +1171,11 @@ The main methodological achievements are:
 7. 1 ns MD comparison showing stronger short-timescale dynamic behavior for `MPNN_NEW_01`;
 8. production endpoint analysis on 50 snapshots per new candidate;
 9. endpoint ranking showing `MPNN_NEW_05` as the stronger energetic ProteinMPNN lead;
-10. direct five-candidate comparison with `F0010`, `CF02` and `CF06`.
+10. direct five-candidate comparison with `F0010`, `CF02` and `CF06`;
+11. independent structural plausibility assessment of the two advanced candidates;
+12. preliminary developability screening;
+13. explicit Bayesian-optimisation readiness assessment;
+14. transparent final multi-objective decision-support ranking.
 
 The final cross-method picture is:
 
