@@ -1,690 +1,386 @@
 ![PEARL — Peptide Extraction and AI-guided Refinement for Ligand design](pearl.png)
 # PEARL — Peptide Extraction and AI-guided Refinement for Ligand Design
 
+# PEARL — Peptide Extraction and AI-guided Refinement for Ligand Design
+
 **From Dimers to Drugs**
 
-PEARL is a computational drug-discovery project focused on reverse-engineering a kinase protein–protein interface and using structural bioinformatics, computational chemistry, molecular modelling and AI-guided optimisation to identify peptide and, ultimately, peptidomimetic or small-molecule inhibitor candidates.
+PEARL is a computational drug-discovery research prototype that reverse-engineers a kinase protein–protein interface and uses structural bioinformatics, molecular modelling, molecular dynamics (MD), protein AI and cheminformatics to prioritize peptide and small-molecule inhibitor hypotheses.
 
-The current prototype is developed on the **EGFR kinase-domain dimer (PDB: 3NJP)**.
+The current implementation is developed around the **EGFR kinase-domain asymmetric dimer (PDB `3NJP`)**, focusing on the interface between chains **B and D**.
 
-> **Project status:** active research prototype.  
-> The repository currently contains two consolidated peptide-design pipelines. Molecular-dynamics, protein-language-model and small-molecule lead-generation stages are planned as the next extensions.
+> **Repository status:** five implemented computational pipelines spanning interface analysis, peptide design, molecular dynamics, AI-guided peptide redesign, MD-derived pharmacophore construction and small-molecule lead prioritization. All reported leads remain computational hypotheses; no experimental binding, inhibition, efficacy or safety validation is claimed.
 
 ---
 
-## Project objective
-
-The long-term PEARL workflow is designed to transform a crystallographic kinase dimer into a ranked set of candidate inhibitors through four broad stages:
+## Workflow at a glance
 
 ```text
-Kinase dimer structure
+EGFR kinase dimer (3NJP, chains B–D)
         ↓
-1. Interface analysis and hotspot identification
+Pipeline 1 — interface mapping and hotspot discovery
         ↓
-2. Molecular dynamics and interface validation
+Pipeline 2 — peptide miniaturization, CLEAR/VAE optimization,
+             FoldX and Rosetta FlexPepDock validation
         ↓
-3. AI-guided peptide sequence optimisation
+Pipeline 3 — explicit-solvent MD, contact persistence and
+             comparative endpoint energetics
         ↓
-4. Pharmacophore extraction and lead generation
+Pipeline 4 — ESM-2 and ProteinMPNN peptide design,
+             structural/MD/endpoint validation, ESMFold,
+             developability proxies and multi-objective integration
         ↓
-Ranked peptide / peptidomimetic / small-molecule leads
+Pipeline 5 — MD-derived pharmacophore, REINVENT4 sampling,
+             pharmacophore screening, chemistry rescue,
+             DiffDock, Vina local refinement and lead selection
+        ↓
+Prioritized peptide and small-molecule hypotheses
 ```
 
-The repository currently focuses primarily on interface/hotspot analysis, peptide miniaturisation, AI-guided local peptide optimisation and explicit structural validation with FoldX and Rosetta FlexPepDock.
+PEARL follows a layered-validation philosophy: no surrogate score, force-field energy, docking output, structure prediction or short MD trajectory is treated as sufficient evidence on its own. Cross-method agreement is used for **prioritization**, not as proof of biological activity.
 
 ---
 
 ## Biological system
 
-- **Target:** Epidermal Growth Factor Receptor (EGFR)
-- **Reference structure:** PDB `3NJP`
-- **Studied protein–protein interface:** chains `B–D`
-- **Reference short peptide:** `F0010`
-- **F0010 sequence:** `IGERCQYRDLK`
-- **Peptide source:** contiguous hotspot-rich region extracted from the EGFR dimer interface
+| Item | Current implementation |
+|---|---|
+| Target | Epidermal Growth Factor Receptor (EGFR) |
+| Reference structure | PDB `3NJP` |
+| Studied interface | Chains `B–D` |
+| Receptor chain | `B` |
+| Partner/peptide chain | `D` |
+| Short natural reference | `F0010` |
+| F0010 sequence | `IGERCQYRDLK` |
+| F0010 mapping | Chain D residues 38–48 |
 
-The analyses in this repository are computational and should not be interpreted as experimental evidence of peptide binding, inhibition, affinity or therapeutic activity.
+F0010 is a contiguous, hotspot-rich fragment derived from the native interface and serves as the principal short-peptide reference throughout the repository.
 
 ---
 
-# Repository structure
+## Repository structure
 
 ```text
 PEARL/
-│
 ├── README.md
 ├── pearl.png
-│
 ├── pipeline_1_initial_prototype/
 │   ├── README.md
-│   ├── 01_EGFR_PDB_to_Interface_Graph.ipynb
-│   ├── 01B_Biological_Interface_Validation.ipynb
-│   ├── 02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED.ipynb
-│   ├── 03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
-│   └── 04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb
-│
-└── pipeline_2_structural_validation_and_docking/
+│   └── 01–04b  interface graph, biological-interface validation,
+│              FoldX alanine scanning, peptide extraction and ranking
+├── pipeline_2_structural_validation_and_docking/
+│   ├── README.md
+│   ├── 02c–05e  peptide miniaturization, CLEAR, FoldX,
+│   │             FlexPepDock and adjacent-pair scoring
+│   └── vae_extension/
+│       ├── README.md
+│       └── 06a–06d  VAE training, latent analysis,
+│                    latent counterfactuals and method comparison
+├── pipeline_3_molecular_dynamics_and_binding_energy/
+│   ├── README.md
+│   ├── 07a–07e  OpenMM setup, interface/contact analysis,
+│   │             peptide MD and endpoint-energy comparison
+│   └── 10ns_continuation/
+│       └── 07d_OpenMM_continue_from_1ns_to_10ns.ipynb
+├── pipeline_4_protein_language_model_design/
+│   ├── README.md
+│   └── 08a–08j  ESM-2, ProteinMPNN, FoldX/Rosetta, MD,
+│                 endpoint energetics, ESMFold, developability,
+│                 BO readiness and multi-objective ranking
+└── pipeline_5_pharmacophore_and_small_molecule_leads/
     ├── README.md
-    ├── 02c_Hotspot_Centered_Peptide_Library.ipynb
-    ├── 02d_Short_Peptide_Structural_and_Energetic_Ranking.ipynb
-    ├── 03c_Short_Peptide_Structural_Preparation_and_Guided_Docking.ipynb
-    ├── 03d_Top3_FlexPepDock_Deep_Refinement_N20.ipynb
-    ├── 04c_CLEAR_Local_Peptide_Variant_Dataset.ipynb
-    ├── 04d_CLEAR_Peptide_Oracle_Training.ipynb
-    ├── 04e_CLEAR_Peptide_Counterfactual_Optimization.ipynb
-    ├── 05c_CLEAR_Counterfactual_FoldX_and_Structural_Validation.ipynb
-    ├── 05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb
-    ├── 05e_CLEAR_Adjacent_Amino_Acid_Pair_Energy_Scoring.ipynb
-    │
-    └── vae_extension/
-        ├── README.md
-        ├── 06a_CLEAR_Peptide_VAE_Training.ipynb
-        ├── 06b_CLEAR_VAE_Latent_Space_Analysis.ipynb
-        ├── 06c_CLEAR_VAE_Latent_Counterfactual_Optimization.ipynb
-        └── 06d_CLEAR_VAE_vs_Direct_CLEAR_Comparison.ipynb
+    └── 09a–09g  MD pharmacophore, consolidation, REINVENT4,
+                  chemistry filtering, DiffDock, Vina and lead selection
 ```
 
-> The repository is organised by **methodological pipeline**, not by a single uninterrupted notebook numbering scheme. Some Pipeline 2 notebooks revisit, replace or extend concepts introduced in Pipeline 1.
+Some computationally expensive notebooks have test and production variants. The pipeline-level README files document their execution order, inputs, parameters and output contracts.
 
 ---
 
-# Pipeline 1 — Initial Prototype
+## Implementation status
 
-**Status: complete as historical/prototyping branch**
-
-Directory:
-
-```text
-pipeline_1_initial_prototype/
-```
-
-Pipeline 1 established the first working PEARL prototype:
-
-```text
-PDB 3NJP
-  ↓
-interface identification
-  ↓
-biological-interface validation
-  ↓
-residue-contact graph
-  ↓
-FoldX alanine scanning
-  ↓
-energetic hotspot identification
-  ↓
-contiguous peptide extraction
-  ↓
-candidate generation
-  ↓
-pre-docking ranking
-```
-
-Its main role is to document the first implementation of the PEARL logic, from interface identification to seed-peptide and candidate generation.
-
----
-
-# Pipeline 2 — Peptide Design, CLEAR Optimisation and Structural Validation
-
-**Status: consolidated computational peptide-design branch**
-
-Directory:
-
-```text
-pipeline_2_structural_validation_and_docking/
-```
-
-Pipeline 2 expands the initial prototype into two complementary peptide-design strategies.
-
-```text
-                          Pipeline 2
-                              │
-              ┌───────────────┴───────────────┐
-              │                               │
-     Branch A — Miniaturisation       Branch B — CLEAR
-              │                               │
-   hotspot-centred peptides            F0010 local landscape
-              ↓                               ↓
- structural/energetic ranking              oracle
-              ↓                               ↓
-    FlexPepDock refinement             Direct CLEAR
-                                              ↓
-                                           FoldX
-                                              ↓
-                                       FlexPepDock
-                                              ↓
-                                        pair scoring
-                                              ↓
-                                       VAE extension
-```
-
-## Branch A — Hotspot-centred peptide miniaturisation
-
-This branch evaluates shorter natural fragments derived directly from the EGFR interface.
-
-```text
-interface hotspot region
-        ↓
-nested peptide windows
-        ↓
-structural and energetic ranking
-        ↓
-guided docking preparation
-        ↓
-Rosetta FlexPepDock
-        ↓
-selection of a short natural reference
-```
-
-Among the evaluated fragments, the 11-residue peptide:
-
-```text
-F0010
-IGERCQYRDLK
-```
-
-emerged as the main miniaturised reference for subsequent optimisation.
-
----
-
-# Branch B — CLEAR-inspired local peptide optimisation
-
-The second branch constructs a local and interpretable sequence-optimisation problem around F0010.
-
-## Local peptide landscape
-
-Notebook `04c` constructs a constrained local library around:
-
-```text
-IGERCQYRDLK
-```
-
-using one- and two-residue substitutions permitted by position-specific rules.
-
-The current local dataset contains:
-
-```text
-539 peptide variants
-```
-
-and is used to build a surrogate peptide landscape.
-
-## Peptide oracle
-
-Notebook `04d` trains a differentiable GNN-based peptide oracle to approximate the local structural/energetic target.
-
-The oracle is intended for **local candidate ranking and optimisation**. It is not a replacement for FoldX, Rosetta or experimental binding measurements.
-
-## Direct CLEAR counterfactual optimisation
-
-Notebook `04e` performs constrained counterfactual optimisation directly in peptide sequence/categorical space.
-
-```text
-F0010
-  ↓
-categorical amino-acid representation
-  ↓
-differentiable peptide oracle
-  ↓
-minimality + mutation constraints
-  ↓
-counterfactual peptide
-```
-
-Two especially important mutation patterns are:
-
-```text
-D9E
-C5S + D9E
-```
-
-The minimal counterfactual is:
-
-```text
-IGERCQYRELK
-D9E
-```
-
-while the strongest oracle-ranked local candidate is:
-
-```text
-IGERSQYRELK
-C5S + D9E
-```
-
----
-
-# Structural validation
-
-Candidate sequences generated by CLEAR are not accepted solely on the basis of the surrogate oracle.
-
-They are subjected to explicit structure-based evaluation.
-
-## FoldX validation
-
-Notebook `05c` evaluates counterfactual candidates using FoldX BuildModel and structural consistency checks, including:
-
-- mutation feasibility;
-- receptor–peptide interaction energy;
-- preservation of native interface contacts;
-- hotspot retention;
-- steric clashes;
-- comparison with F0010.
-
-A major result is that `C5S + D9E` shows a favourable FoldX profile.
-
-## Rosetta FlexPepDock refinement
-
-Notebook `05d` performs higher-resolution peptide–protein refinement using Rosetta FlexPepDock.
-
-The strongest Rosetta-prioritised candidates include:
-
-```text
-CF_06   IGERCQYRELR   D9E + K11R
-CF_10   IGERCQYRELQ   D9E + K11Q
-CF_02   IGERSQYRELK   C5S + D9E
-```
-
-A central observation is that the single mutation `D9E`, although strongly favoured by the local oracle and FoldX, performs less favourably by itself in the deeper Rosetta refinement.
-
-This suggests that the structural effect of D9E depends on its mutational context.
-
----
-
-# Adjacent amino-acid pair scoring
-
-Notebook `05e` introduces an interpretable, position-specific adjacent-pair score.
-
-For a peptide:
-
-```text
-a1 a2 a3 ... aL
-```
-
-the sequence is decomposed into:
-
-```text
-(a1,a2), (a2,a3), ..., (aL-1,aL)
-```
-
-and a local empirical pair cost is estimated from the 04c dataset.
-
-The pair score helps interpret why particular substitutions are repeatedly favoured.
-
-It is a **surrogate energetic cost** and must not be interpreted as an absolute physical binding energy.
-
----
-
-# Optional VAE Extension
-
-Directory:
-
-```text
-pipeline_2_structural_validation_and_docking/vae_extension/
-```
-
-The VAE branch investigates whether the local F0010 sequence landscape can also be represented and searched through a learned continuous latent space.
-
-```text
-04c local peptide dataset
-        ↓
-06a true VAE training
-        ↓
-06b latent-space validation
-        ↓
-06c latent counterfactual optimisation
-        ↓
-06d comparison with Direct CLEAR
-```
-
-## True VAE representation
-
-Notebook `06a` implements:
-
-```text
-peptide sequence
-      ↓
-encoder
-      ↓
-μ, logσ²
-      ↓
-reparameterisation
-      ↓
-latent z
-      ↓
-decoder
-      ↓
-amino-acid probabilities
-```
-
-## Latent-space validation
-
-Notebook `06b` evaluates whether sequence similarity and the local target retain meaningful structure in the latent space.
-
-The current model passed all predefined readiness checks for latent counterfactual optimisation.
-
-## VAE-CLEAR counterfactual search
-
-Notebook `06c` optimises the continuous latent vector while keeping the VAE decoder and peptide oracle frozen.
-
-Successful VAE-CLEAR solutions include:
-
-```text
-IGERSQYRELK   C5S + D9E
-IGERCQYRELK   D9E
-IGERCQYREMK   D9E + L10M
-IGERSQYRDLK   C5S
-```
-
-## Direct CLEAR vs VAE-CLEAR
-
-Notebook `06d` compares the two counterfactual strategies.
-
-Current result:
-
-```text
-Direct CLEAR successful sequences: 36
-VAE-CLEAR successful sequences:     4
-Shared VAE/Direct sequences:         4
-VAE-only sequences:                  0
-```
-
-The VAE therefore does not expand the successful candidate space in this local experiment.
-
-Its main contribution is **cross-method algorithmic convergence**.
-
-In particular, both approaches independently recover:
-
-```text
-C5S + D9E
-D9E
-```
-
-This convergence strengthens the computational prioritisation of those local mutation patterns, but it is **not independent biological validation**, because both methods ultimately depend on the same local peptide dataset and oracle.
-
----
-
-# Current computationally prioritised candidates
-
-The current peptide results should be interpreted as a **multi-method shortlist**, rather than as one absolute ranking.
-
-| Candidate | Sequence | Mutations | Main interpretation |
-|---|---|---|---|
-| `CF_06` | `IGERCQYRELR` | D9E + K11R | strongest integrated Rosetta lead |
-| `CF_10` | `IGERCQYRELQ` | D9E + K11Q | strong Rosetta-prioritised lead |
-| `CF_02` | `IGERSQYRELK` | C5S + D9E | strongest Direct/VAE cross-method and FoldX candidate |
-| `CF_05` | `IGERCEYRELK` | Q6E + D9E | favourable adjacent-pair profile |
-| `F0010` | `IGERCQYRDLK` | natural reference | miniaturised interface-derived control |
-| `CF_03` | `IGERCQYRELK` | D9E | minimal CLEAR/VAE counterfactual; weaker Rosetta result |
-
-The recurrence of D9E across multiple optimisation strategies indicates that residue 9 is a central feature of the current local surrogate landscape.
-
-However, Rosetta results suggest that D9E is more promising when combined with an appropriate second mutation.
-
----
-
-# Current project status
-
-| Stage | Status | Main content |
+| Pipeline | Status | Implemented scope |
 |---|---|---|
-| Pipeline 1 — Initial prototype | ✅ Complete | PDB, interface graph, hotspot identification, initial seed/candidates |
-| Pipeline 2A — Peptide miniaturisation | ✅ Complete | hotspot-centred fragments, FoldX, FlexPepDock, F0010 selection |
-| Pipeline 2B — Direct CLEAR | ✅ Complete | local dataset, GNN oracle, counterfactual optimisation |
-| Pipeline 2 — Structural validation | ✅ Complete | FoldX, FlexPepDock, pair-score interpretation |
-| VAE extension | ✅ Complete | true VAE, latent analysis, latent CF optimisation, Direct-vs-VAE comparison |
-| Molecular dynamics | 🔜 Next | dimer/peptide MD, contact persistence, stability, binding-energy estimates |
-| ESM-2 / ProteinMPNN | 📌 Planned | protein-language-model and inverse-folding sequence design |
-| Pharmacophore / small molecules | 📌 Planned | MD-derived pharmacophore, generative lead design and docking |
+| **1 — Initial prototype** | Complete (historical branch) | Interface identification, graph construction, biological-interface checks, FoldX alanine scanning, hotspots and initial peptide windows |
+| **2 — Peptide design and structural validation** | Complete | Hotspot-centered miniaturization, F0010 selection, 539-variant local landscape, GNN oracle, Direct CLEAR, FoldX, FlexPepDock, adjacent-pair scoring and VAE-CLEAR comparison |
+| **3 — MD and endpoint energetics** | Complete as a comparative prototype | OpenMM explicit-solvent simulations, RMSD/RMSF, contact persistence, hotspot integration and single-trajectory MM/GBSA-like endpoint comparisons; a 10 ns continuation notebook is also included |
+| **4 — AI-guided peptide design** | Implemented through `08j`, with explicit partial methods | ESM-2, ProteinMPNN, FoldX/Rosetta, 1 ns MD, endpoint energetics and ESMFold are implemented; `08h` uses developability proxies because authentic CamSol was not run; `08i` provides evidence integration and BO readiness, not an executed BoTorch optimization; `08j` provides descriptive multi-objective/Pareto decision support |
+| **5 — Pharmacophore and small molecules** | Complete as a computational discovery funnel | MD-derived pharmacophore, screening-ready consolidation, unconstrained REINVENT4 generation followed by pharmacophore screening, chemistry rescue, DiffDock, Vina local refinement and integrated lead prioritization |
 
 ---
 
-# Planned Pipeline 3 — Molecular Dynamics and Binding-Energy Analysis
+## Pipeline 1 — Interface and hotspot prototype
 
-The next major development is intended to cover the molecular-dynamics component of PEARL.
-
-Proposed directory:
+Pipeline 1 established the original PEARL logic:
 
 ```text
-pipeline_3_molecular_dynamics_and_binding_energy/
+3NJP → B–D interface → residue-contact graph → FoldX alanine scan
+     → energetic hotspots → contiguous peptide windows
+     → initial candidate ranking
 ```
 
-Possible modules:
-
-```text
-07a_EGFR_Dimer_OpenMM_MD_Setup.ipynb
-07b_EGFR_Dimer_MD_Contact_Persistence.ipynb
-07c_Selected_Peptide_MD_Analysis.ipynb
-07d_MM_PBSA_or_MM_GBSA_Binding_Energy.ipynb
-```
-
-The objective will be to evaluate a compact number of representative systems, for example:
-
-```text
-EGFR B–D interface
-F0010
-CF_06
-CF_02
-```
-
-Potential analyses include:
-
-- OpenMM system preparation;
-- AMBER-family protein force field;
-- explicit solvent;
-- minimisation and equilibration;
-- production MD;
-- peptide RMSD/RMSF;
-- receptor–peptide contact persistence;
-- hotspot-contact persistence;
-- hydrogen-bond occupancy;
-- trajectory clustering;
-- approximate MM-PBSA/MM-GBSA comparison.
+This branch is retained as the historical prototype and provenance for later structural and energetic choices.
 
 ---
 
-# Planned Pipeline 4 — Protein Language Models and Sequence Design
+## Pipeline 2 — Peptide design, CLEAR and structural validation
 
-A later extension will investigate sequence design methods closer to the original PEARL specification.
+Pipeline 2 contains two complementary peptide-design branches.
 
-Proposed directory:
+### Hotspot-centered miniaturization
 
-```text
-pipeline_4_protein_language_model_design/
-```
+Natural interface fragments are ranked structurally and energetically, prepared for guided docking and refined with Rosetta FlexPepDock. The 11-residue peptide **F0010 (`IGERCQYRDLK`)** emerged as the primary miniaturized reference.
 
-Possible modules:
+### Local CLEAR and VAE optimization
 
-```text
-08a_ESM2_Masked_Substitution_Profiling.ipynb
-08b_ProteinMPNN_Backbone_Fixed_Design.ipynb
-08c_PLM_Candidate_Filtering_and_Comparison.ipynb
-```
+A constrained **539-variant** sequence landscape around F0010 supports a differentiable GNN-based local oracle and Direct CLEAR-inspired counterfactual search. FoldX and FlexPepDock are then used as explicit structural filters. A true VAE extension explores the same local landscape in latent space.
 
-The goal will be to compare independently generated sequence preferences against:
+Direct CLEAR found 36 successful sequences and VAE-CLEAR found four; all four VAE successes were also recovered by Direct CLEAR. This is useful algorithmic convergence, but not independent biological validation because the methods share the underlying local dataset and oracle.
 
-```text
-Direct CLEAR
-VAE-CLEAR
-FoldX
-Rosetta
-MD
-```
+Important recurring mutation patterns include `D9E` and `C5S + D9E`. Rosetta results indicate that the effect of `D9E` depends strongly on the accompanying mutation.
 
 ---
 
-# Planned Pipeline 5 — Pharmacophore and Small-Molecule Lead Generation
+## Pipeline 3 — Molecular dynamics and comparative endpoint energetics
 
-The final planned stage moves from peptide optimisation toward peptidomimetic and small-molecule hypotheses.
+Pipeline 3 moves from static models to explicit-solvent MD using OpenMM with AMBER ff14SB, TIP3P water, approximately 0.15 M NaCl, 300 K and 1 bar. The primary production comparison uses 1 ns trajectories; these are short comparative simulations, not evidence of long-timescale convergence.
 
-Proposed directory:
+### Interface-level results
 
-```text
-pipeline_5_pharmacophore_and_small_molecule_leads/
-```
+- 147 unique B–D contacts were observed during the prototype MD.
+- 80 contacts persisted in at least 50% of analyzed frames.
+- All 11 F0010 positions were supported by MD-persistent interface contacts.
+- Six of the 11 positions were supported by both FoldX hotspot analysis and MD persistence.
 
-Possible modules:
+### Peptide comparison
 
-```text
-09a_MD_Derived_Pharmacophore.ipynb
-09b_Generative_Small_Molecule_Design.ipynb
-09c_DiffDock_Small_Molecule_Docking.ipynb
-09d_MMGBSA_and_Druglikeness_Ranking.ipynb
-```
+| Candidate | Sequence | Mean RMSD (Å) | Mean RMSF (Å) | Persistent contacts ≥50% | Mean persistence | Endpoint proxy (kcal/mol) |
+|---|---|---:|---:|---:|---:|---:|
+| `CF02` | `IGERSQYRELK` | **0.901** | **0.737** | 43 | **0.603** | −56.62 ± 4.63 |
+| `CF06` | `IGERCQYRELR` | 1.293 | 0.904 | **45** | 0.529 | **−65.66 ± 6.80** |
+| `F0010` | `IGERCQYRDLK` | 1.966 | 1.164 | 43 | 0.541 | −59.46 ± 5.96 |
 
-Potential components include:
-
-- MD-derived pharmacophore extraction;
-- RDKit pharmacophore features;
-- generative small-molecule design;
-- DiffDock docking;
-- MM-GBSA rescoring;
-- Lipinski and Veber filters;
-- final structural rationale for the top lead.
-
-This stage is currently **planned and not yet implemented**.
+`CF02` is the strongest short-timescale dynamic-stability reference, whereas `CF06` is the strongest structural/endpoint-energy reference. The endpoint calculation is a comparative, single-trajectory **MM/GBSA-like proxy**; it is not a rigorous absolute binding free energy.
 
 ---
 
-# Methodological philosophy
+## Pipeline 4 — Protein AI and peptide redesign (`08a–08j`)
 
-PEARL uses a layered validation strategy:
+Pipeline 4 adds sequence- and structure-conditioned AI while preserving downstream physical and structural checks.
+
+| Notebook | Implemented role | Scientific status |
+|---|---|---|
+| `08a` | ESM-2 masked pseudo-log-likelihood, pseudo-perplexity and embeddings | Sequence-plausibility prior; not binding evidence |
+| `08b` | Constrained ProteinMPNN redesign of peptide chain D | 100 samples, 24 unique designs; not affinity prediction |
+| `08c` | Integrated ESM-2/ProteinMPNN shortlist | Transparent heuristic prioritization |
+| `08d` | FoldX and Rosetta FlexPepDock validation | Static structural/energetic filtering |
+| `08e` | Explicit-solvent MD for top AI-derived peptides | 1 ns comparative prototype |
+| `08f` | Endpoint-energy comparison | Comparative MM/GBSA-like proxy, not absolute ΔG |
+| `08g` | ESMFold sequence/file QC, pLDDT and bound-reference geometry comparison | **Completed**; isolated-peptide confidence and geometry are not affinity measurements |
+| `08h` | Physicochemical and developability screening | **Completed in proxy mode**; authentic CamSol was not executed |
+| `08i` | Cross-notebook evidence contract, normalization, sensitivity analysis and BO readiness | **No true BoTorch optimization executed**: only two observations, no candidate pool, GP, acquisition function or iterative proposal loop |
+| `08j` | Equal-domain ranking, sensitivity scenarios and Pareto analysis | **Completed descriptive multi-objective decision support**, not Bayesian optimization |
+
+### AI-derived peptide results
+
+The five-candidate ProteinMPNN shortlist was led initially by `MPNN_NEW_01` (`TGPRNQYRDLP`). Static FoldX/Rosetta analysis favored `MPNN_NEW_05` (`IGPRHQYRDLP`), and both advanced to MD.
+
+| Evidence domain | `MPNN_NEW_01` | `MPNN_NEW_05` | Favored candidate |
+|---|---:|---:|---|
+| Mean peptide RMSD, 1 ns (Å) | **1.268** | 1.417 | `MPNN_NEW_01` |
+| Mean contact persistence | **0.599** | 0.535 | `MPNN_NEW_01` |
+| Endpoint proxy (kcal/mol) | −46.41 ± 4.66 | **−53.67 ± 6.43** | `MPNN_NEW_05` |
+| ESMFold mean pLDDT | **72.56** | 67.27 | `MPNN_NEW_01` |
+| ESMFold global Cα RMSD (Å) | **4.49** | 5.07 | `MPNN_NEW_01` |
+| GRAVY proxy | **−1.94** | −1.44 | `MPNN_NEW_01` (more hydrophilic) |
+
+The final equal-weight exploratory ranking favors `MPNN_NEW_01`; `MPNN_NEW_05` remains the endpoint-energy-favored alternative. Both are Pareto-optimal in the implemented two-candidate analysis.
+
+This conclusion must remain conservative:
+
+- CamSol is supported as an import contract, but no authentic CamSol result is reported; `08h` used Biopython-derived descriptors and GRAVY as a proxy.
+- BoTorch readiness checks are present, but Bayesian optimization was disabled and unavailable in the executed state. No GP posterior, acquisition function, newly proposed sequence or iterative BO cycle was produced.
+- With only two candidates, standardized utilities largely encode ordering rather than robust effect magnitude.
+
+---
+
+## Pipeline 5 — MD-derived pharmacophore and small-molecule leads (`09a–09g`)
+
+Pipeline 5 translates persistent peptide–EGFR interactions into a screening hypothesis and a small-molecule prioritization funnel.
 
 ```text
-sequence hypothesis
-        ↓
-local surrogate / AI model
-        ↓
-explicit structural modelling
-        ↓
-higher-resolution docking/refinement
-        ↓
-molecular dynamics
-        ↓
-binding-energy estimation
-        ↓
-experimental validation
+300 peptide–EGFR MD frames
+→ 5,330 active feature observations
+→ 59 persistent candidate-level features
+→ 32 spatial clusters
+→ 17 core consensus features
+→ 10 consolidated groups (5 mandatory, 4 optional, 1 contextual)
+→ 1,000 REINVENT4 molecules analyzed; 996 embedded in 3D
+→ 83 complete mandatory assignments; 2 strict hits
+→ 0 strict hits chemically eligible
+→ 8 chemically acceptable near-miss rescue candidates
+→ 80 DiffDock poses
+→ 4 Vina-refined finalists
+→ integrated lead selection
 ```
 
-No individual computational method is treated as sufficient evidence by itself.
+### Generation and pharmacophore screening
 
-Agreement between several methods is used for **candidate prioritisation**, not for claiming experimentally confirmed binding.
+REINVENT4 was used for **unconstrained de novo molecular sampling** (5,000 SMILES requested). A 1,000-molecule subset was then embedded and screened against the pharmacophore. The implemented workflow is therefore:
+
+```text
+REINVENT4 generation → downstream pharmacophore screening
+```
+
+It is **not pharmacophore-guided or pharmacophore-conditioned reinforcement learning**.
+
+The two strict pharmacophore hits, `MOL00336` and `MOL00570`, failed downstream medicinal-chemistry filters. Consequently, the eight compounds advanced to docking are explicitly retained as:
+
+```text
+docking_track        = NEAR_MISS_RESCUE
+pharmacophore_status = NEAR_MISS_MANDATORY_ONLY
+chemistry_class      = CHEM_PASS
+```
+
+Their near-miss status is not erased by subsequent docking results.
+
+### DiffDock and Vina
+
+Eight near-miss rescue candidates were docked to EGFR chain B with DiffDock (10 poses per molecule). The top four were then evaluated by scoring the selected DiffDock pose with AutoDock Vina, applying short local Vina optimization and measuring local pose displacement. This is local refinement of DiffDock poses, not a new global Vina docking campaign.
+
+| Candidate | DiffDock role | Vina after local refinement | Local RMSD (Å) | Integrated interpretation |
+|---|---|---:|---:|---|
+| `MOL00583` | DiffDock rank 2; broad receptor engagement | −4.314 | 0.586 | **Primary computational lead; broadest cross-method support** |
+| `MOL00484` | Strongest engagement/chemistry profile | −4.267 | **0.057** | Orthogonal follow-up lead; exceptional local geometry stability |
+| `MOL00600` | Strong pharmacophore fit | **−5.791** | 0.190 | Orthogonal follow-up lead; strongest Vina support |
+| `MOL00273` | **Strongest original DiffDock ranking** | −3.937 | 0.203 | Method-specific/orthogonal follow-up lead |
+
+Vina outputs are empirical docking scores for within-protocol comparison. They are **not MM-GBSA, MM-PBSA or rigorous binding free energies (ΔG)**.
+
+### Final Pipeline 5 priorities
+
+| Rank | Candidate | Priority | Top-two support axes | Status |
+|---:|---|---|---:|---|
+| 1 | `MOL00583` | Tier 1 | 4/6 | Primary computational lead |
+| 2 | `MOL00484` | Tier 2 | 3/6 | Orthogonal follow-up |
+| 3 | `MOL00600` | Tier 2 | 3/6 | Orthogonal follow-up |
+| 4 | `MOL00273` | Tier 2 | 2/6 | Method-specific follow-up |
+
+All four are Pareto non-dominated under the implemented rank-space analysis. None is a validated binder or drug candidate, and all retain near-miss rescue pharmacophore provenance.
 
 ---
 
-# Main current conclusion
+## Current prioritized leads
 
-The current repository demonstrates an end-to-end computational peptide-design prototype starting from the EGFR dimer interface.
+### Peptides
 
-The workflow has:
+| Candidate | Sequence | Current role |
+|---|---|---|
+| `CF06` | `IGERCQYRELR` | Strongest integrated structural and endpoint-energy reference |
+| `CF02` | `IGERSQYRELK` | Strongest 1 ns dynamic-stability reference; CLEAR/VAE convergence |
+| `MPNN_NEW_01` | `TGPRNQYRDLP` | Best equal-weight Pipeline 4 exploratory balance; stronger MD/developability-proxy/ESMFold profile among the two AI finalists |
+| `MPNN_NEW_05` | `IGPRHQYRDLP` | Static FoldX/Rosetta and endpoint-energy-favored AI alternative |
+| `F0010` | `IGERCQYRDLK` | Native interface-derived reference/control |
 
-1. identified and characterised the EGFR B–D interface;
-2. identified energetic and structural hotspot regions;
-3. extracted and miniaturised interface-derived peptides;
-4. selected F0010 (`IGERCQYRDLK`) as a short natural reference;
-5. constructed a 539-variant local peptide landscape;
-6. trained a differentiable peptide oracle;
-7. implemented Direct CLEAR-inspired counterfactual optimisation;
-8. validated selected counterfactuals using FoldX and Rosetta FlexPepDock;
-9. implemented an interpretable adjacent-pair surrogate score;
-10. implemented a true VAE latent-space extension;
-11. demonstrated cross-method convergence between Direct CLEAR and VAE-CLEAR.
+These candidates form a **multi-method shortlist**, not a universal affinity ranking.
 
-The strongest current conclusion is that **double mutants containing D9E are repeatedly prioritised**, but their relative structural quality depends strongly on the accompanying mutation.
+### Small molecules
 
-The next scientifically important step is therefore not further local sequence enumeration, but **molecular-dynamics-based validation of the interface and the most representative peptide leads**.
+| Candidate | Current role |
+|---|---|
+| `MOL00583` | Primary computational lead through broad cross-method convergence |
+| `MOL00484` | Chemistry, engagement and local-geometry follow-up |
+| `MOL00600` | Pharmacophore-fit and Vina-score follow-up |
+| `MOL00273` | DiffDock-favored orthogonal follow-up |
 
 ---
 
-# Software and external dependencies
+## Software and external dependencies
 
-The notebooks use or may use:
+The repository uses multiple environments because several external tools have distinct installation and licensing requirements.
 
-- Python
-- Jupyter Notebook
-- NumPy
-- pandas
-- Matplotlib
-- SciPy
+### Core scientific Python stack
+
+- Python and Jupyter Notebook
+- NumPy, pandas, SciPy and Matplotlib
 - scikit-learn
 - PyTorch
 - Biopython
 - NetworkX
-- FoldX
-- Rosetta FlexPepDock
+- RDKit
 
-Planned stages may additionally use:
+### Structural modelling and peptide design
+
+- FoldX
+- Rosetta, including FlexPepDock
+- ESM-2 / `fair-esm`
+- ProteinMPNN
+- ESMFold-generated structure inputs
+
+### Molecular dynamics and trajectory analysis
 
 - OpenMM
+- PDBFixer
 - MDAnalysis
-- ESM-2 / ESMFold
-- ProteinMPNN
-- RDKit
-- REINVENT
-- DiffDock
+- AMBER-family force fields and implicit-solvent models as specified by the notebooks
 
-FoldX, Rosetta and other external software packages must be installed separately and may require local executable/database paths.
+### Small-molecule generation and docking
 
----
+- REINVENT4
+- DiffDock and its PyTorch Geometric/e3nn dependencies
+- AutoDock Vina
+- Meeko
 
-# Limitations
+FoldX, Rosetta, ProteinMPNN, REINVENT4, DiffDock, Vina and model weights/databases may require separate installation, licenses, downloads and local path configuration. Exact versions, production/test switches and platform-specific setup should be recorded alongside each executed run for reproducibility.
 
-Important limitations of the current work include:
-
-- all current results are computational;
-- the peptide landscape is intentionally local around F0010;
-- the oracle is a surrogate trained on computational labels;
-- VAE and Direct CLEAR share the same underlying local dataset and oracle;
-- FoldX energies are approximate;
-- FlexPepDock scores are not experimental affinities;
-- adjacent-pair scores are empirical and not physical energies;
-- molecular dynamics has not yet been incorporated into the current repository state;
-- ESM-2 and ProteinMPNN design are planned but not yet integrated;
-- no peptide has yet been experimentally synthesised or assayed;
-- binding affinity, selectivity, stability, toxicity and cellular activity remain unknown.
-
-The final peptide sequences should therefore be considered **computationally prioritised hypotheses**.
+CamSol and BoTorch should not be listed as completed computational dependencies of the current results: CamSol was not executed, and the BoTorch optimization path was not run.
 
 ---
 
-# Project deliverables
+## Interpretation and limitations
 
-The PEARL work is being developed toward:
-
-- reproducible and annotated Jupyter notebooks;
-- a structured technical/scientific report;
-- quantitative comparison of peptide candidates;
-- structural visualisations;
-- a final presentation explaining the complete target-to-lead workflow.
-
----
-
-## Repository status summary
-
-```text
-PDB / interface / hotspots        ✅
-Peptide extraction                ✅
-Peptide miniaturisation           ✅
-FoldX validation                  ✅
-FlexPepDock refinement            ✅
-Direct CLEAR optimisation         ✅
-VAE latent optimisation           ✅
-Cross-method comparison           ✅
-
-Molecular dynamics                🔜 NEXT
-MM-PBSA / MM-GBSA                 🔜 NEXT
-ESM-2                             📌 PLANNED
-ProteinMPNN                       📌 PLANNED
-Pharmacophore extraction          📌 PLANNED
-REINVENT / generative molecules  📌 PLANNED
-DiffDock                          📌 PLANNED
-Drug-likeness filtering           📌 PLANNED
-Experimental validation           ⏳ FUTURE
-```
+- **No experimental validation:** the repository contains no direct measurements of binding, inhibition, selectivity, cellular activity, toxicity, pharmacokinetics or efficacy.
+- **Model-system scope:** conclusions are specific to the selected EGFR `3NJP` B–D structural context and the preparation choices used here.
+- **Local peptide search:** CLEAR and VAE-CLEAR operate on a deliberately local landscape around F0010; the oracle learns computational labels rather than experimental affinity.
+- **Shared evidence is not independence:** Direct CLEAR and VAE-CLEAR share data and an oracle; apparent convergence must not be overstated.
+- **Approximate static scores:** FoldX energies and Rosetta scores are model-dependent and are not experimental affinities.
+- **Short MD:** the principal 1 ns peptide trajectories support comparative prototyping but cannot establish long-timescale stability or convergence. Frames from one trajectory are time-correlated, not independent replicates.
+- **Endpoint energetics:** the reported peptide endpoint values are comparative, single-trajectory MM/GBSA-like estimates, not rigorous absolute binding free energies.
+- **ESMFold:** confidence and RMSD for isolated 11-residue peptides do not establish receptor-bound conformations or affinity.
+- **Developability:** `08h` reports sequence-derived physicochemical descriptors and heuristics. GRAVY is a proxy, not CamSol and not an experimental solubility measurement.
+- **Bayesian optimization:** `08i` does not contain an executed BoTorch GP/acquisition/iteration workflow. `08j` is transparent multi-objective decision support, not BO.
+- **Pharmacophore generation:** REINVENT4 sampling was unconstrained; pharmacophore matching occurred downstream. It must not be described as pharmacophore-guided RL.
+- **Near-miss rescue:** all docked and finalized small molecules are chemically acceptable mandatory-only near misses, not strict pharmacophore hits.
+- **Docking:** DiffDock confidence, pose-support metrics and Vina scores are method-specific ranking signals. Vina is neither MM-GBSA nor rigorous ΔG.
+- **Drug-likeness is not a drug:** cheminformatic filters and Pareto rankings identify follow-up hypotheses, not safe or effective medicines.
 
 ---
 
-## Disclaimer
+## Reproducibility principles
 
-This repository is an academic computational prototype.
+For every production result, preserve:
 
-The generated peptides and molecular candidates are research hypotheses and are **not validated drugs, inhibitors or therapeutic compounds**.
+1. exact candidate identifiers and sequences/SMILES;
+2. input structures and chain/residue mappings;
+3. software and model versions;
+4. random seeds and production/test switches;
+5. executable/database/model-weight paths;
+6. raw outputs before aggregation;
+7. hashes or manifests where notebooks provide them;
+8. explicit distinction between calculated values, imported external outputs and proxies.
+
+The pipeline README files and notebook QC cells are the authoritative sources for stage-specific execution details.
+
+---
+
+## Final repository status
+
+PEARL now implements a five-pipeline, end-to-end computational prototype:
+
+1. the EGFR B–D interface is identified and characterized;
+2. hotspot-rich peptides are extracted, miniaturized and locally optimized;
+3. prioritized peptides are compared by static modelling, explicit-solvent MD and endpoint proxies;
+4. ESM-2 and ProteinMPNN expand the peptide search, with FoldX/Rosetta, MD, endpoint and ESMFold follow-up plus conservative developability and multi-objective integration;
+5. peptide–EGFR MD ensembles are translated into a pharmacophore and a small-molecule discovery funnel ending in one primary and three orthogonal computational leads.
+
+The central result is not a validated inhibitor. It is a reproducible chain of computational evidence that narrows a kinase-interface design problem to a compact set of peptide and small-molecule hypotheses suitable for more rigorous simulation and, ultimately, experimental testing.peptides and molecular candidates are research hypotheses and are **not validated drugs, inhibitors or therapeutic compounds**.
