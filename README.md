@@ -1,8 +1,6 @@
 ![PEARL — Peptide Extraction and AI-guided Refinement for Ligand design](pearl.png)
 # PEARL — Peptide Extraction and AI-guided Refinement for Ligand Design
 
-# PEARL — Peptide Extraction and AI-guided Refinement for Ligand Design
-
 **From Dimers to Drugs**
 
 PEARL is a computational drug-discovery research prototype that reverse-engineers a kinase protein–protein interface and uses structural bioinformatics, molecular modelling, molecular dynamics (MD), protein AI and cheminformatics to prioritize peptide and small-molecule inhibitor hypotheses.
