@@ -3,7 +3,7 @@ PEARL Pipeline 5 — Pharmacophore, Small-Molecule Lead Discovery and Post-selec
 
 **PEARL — Peptide Extraction and AI-guided Refinement for Ligand design**  
 Target: **EGFR extracellular domain, PDB 3NJP chain B**  
-Pipeline 5: **MD-derived pharmacophore → small-molecule generation/screening → chemistry filtering → DiffDock → Vina refinement → integrated lead selection → lead MD → endpoint energetics**
+Pipeline 5: **MD-derived pharmacophore → small-molecule generation/screening → chemistry filtering → DiffDock → Vina refinement → integrated lead selection → lead MD → endpoint energetics → Windows/CUDA free-ligand and bound-complex follow-up simulations**
 
 ---
 
@@ -43,11 +43,17 @@ MD peptide–EGFR ensembles
         │
         ▼
 09i  MOL00583–EGFR MM/GBSA-like endpoint analysis
+        │
+        ├──────────────► 09j  MOL00583 free in water
+        │                    Windows/CUDA, replicate MD
+        │
+        └──────────────► 09k  MOL00583–EGFR bound-complex replicas
+                             Windows/CUDA, RTX 4090
 ```
 
-After selection in 09g, 09h and 09i evaluate the selected lead dynamically and energetically. They do not rerank the four finalists or change their pharmacophore provenance. The final result remains **computational prioritization with preliminary post-selection evidence**, not experimental evidence of binding.
+After selection in 09g, 09h and 09i evaluate the selected lead dynamically and energetically. The Windows/CUDA follow-up stages 09j and 09k extend this post-selection validation by comparing the neutral MOL00583 microstate in free water with longer replicated simulations of the bound MOL00583–EGFR complex. These stages do not rerank the four finalists or change their pharmacophore provenance. The final result remains **computational prioritization with preliminary post-selection evidence**, not experimental evidence of binding.
 
-This README consolidates the operational instructions for 09a–09i. Recorded 09h/09i results were verified on 13 September 2026; separate stage READMEs are not required.
+This README consolidates the operational instructions for 09a–09k. Recorded 09h/09i results were verified on 13 September 2026. The Windows/CUDA extensions 09j and 09k are documented here together with their stage-specific execution notes; production CUDA status must be interpreted exactly as reported in the corresponding notebook outputs and stage notes.
 
 ---
 
@@ -64,6 +70,8 @@ This README consolidates the operational instructions for 09a–09i. Recorded 09
 | `09g_Integrated_Pipeline5_Lead_Selection*.ipynb` | Integrate pharmacophore, chemistry, DiffDock, contacts and Vina evidence | Final multi-criterion lead priority |
 | `09h_MOL00583_EGFR_MD_Validation*.ipynb` | Validate the 09f pose of the lead selected in 09g using explicit-solvent MD | Trajectories, RMSD/RMSF, retention, contacts, QC and 09i manifest |
 | `09i_MOL00583_EGFR_MMGBSA_Endpoint_Analysis*.ipynb` | Evaluate snapshots from the 1 ns 09h run using GBn2/ACE endpoint energetics | Energy components, temporal diagnostics, QC and report |
+| `09j_MOL00583_Free_Water_MD_Comparison*.ipynb` | Simulate the neutral MOL00583 microstate free in water on Windows/CUDA for conformational and hydration comparison with the bound state | Replicate trajectories, ligand RMSD/radius diagnostics, hydration counts, QC and summary |
+| `09k_MOL00583_EGFR_Bound_Replicates*.ipynb` | Run longer replicated MD of the bound MOL00583–EGFR complex on Windows/CUDA / RTX 4090 | Three 10 ns bound replicas, contact/RMSD/RMSF diagnostics, QC and comparison-ready outputs |
 
 ---
 
@@ -609,6 +617,307 @@ Use production outputs, not test screenshots. `09i_endpoint.png` shows 50 endpoi
 
 ---
 
+## 09j — MOL00583 free in water, Windows/CUDA
+
+09j is a post-selection control experiment designed to characterize **MOL00583 in the unbound state** under explicit-solvent molecular dynamics and compare its conformational behavior with the ligand extracted from the bound 09h trajectory.
+
+The notebook is intended for Windows/CUDA execution and is packaged under:
+
+```text
+C:\Users\Roberto\PEARL\PEARL_09j\
+```
+
+with the notebook:
+
+```text
+09j_MOL00583_Free_Water_MD_Comparison.ipynb
+```
+
+Use the Jupyter kernel:
+
+```text
+Python (PEARL GPU)
+```
+
+### Scientific purpose
+
+09j does **not** estimate binding affinity and does not replace 09h or 09i. It addresses a different question:
+
+```text
+How does MOL00583 behave when free in water,
+compared with the same neutral microstate while bound to EGFR?
+```
+
+The ligand is simulated in the **same neutral microstate used in 09h**. The OpenFF parameters of all 53 atoms are inherited from the 09h cache and were checked against the original system for charges, sigma and epsilon.
+
+Chemical audit information retained in the Windows package includes:
+
+```text
+formula: C22H23N5O3
+formal charge: 0
+```
+
+RDKit enumeration produced 21 candidate tautomeric forms for documentation, but these are **not** interpreted as 21 equiprobable states and no quantitative pKa or protonation-population prediction was performed.
+
+Therefore:
+
+```text
+09j = comparison conditioned on one neutral microstate
+09j ≠ constant-pH MD
+09j ≠ complete protonation-state analysis
+```
+
+Alternative protonation/tautomeric states would require an explicitly motivated choice and new parameterization. Charges from the neutral state must not be reused for chemically different microstates.
+
+### Execution modes
+
+Preflight:
+
+```text
+RUN_MD=False
+```
+
+The notebook checks inputs and intentionally stops after the preflight.
+
+Technical test:
+
+```text
+RUN_MD=True
+FAST_TEST_MODE=True
+```
+
+Protocol:
+
+```text
+10 ps NVT
+10 ps NPT
+50 ps production
+```
+
+Extended mode:
+
+```text
+RUN_MD=True
+FAST_TEST_MODE=False
+```
+
+For each of three sequential replicas:
+
+```text
+100 ps NVT
+200 ps NPT
+10 ns production
+```
+
+The three replicas use different seeds but share the same initial molecular geometry. They are therefore stochastic replicas, not independently prepared chemical microstates.
+
+### Analyses
+
+09j evaluates:
+
+- ligand conformational RMSD after fitting the ligand to itself;
+- heavy-atom geometric radius;
+- per-replica distributions;
+- comparison with MOL00583 coordinates extracted from the bound 09h trajectory;
+- water-oxygen counts within 3.5 Å of the ligand.
+
+The water counts are geometric hydration diagnostics and **not** hydrogen-bond counts.
+
+The first 20% of each production trajectory is discarded for the comparative analyses.
+
+The free-ligand RMSD used here is not the same quantity as the ligand RMSD after EGFR alignment used for binding-site retention in 09h.
+
+### Outputs
+
+New runs are written under:
+
+```text
+C:\Users\Roberto\PEARL\outputs\pipeline_5_09j_free_ligand\
+```
+
+Each replica can store:
+
+```text
+solvated PDB
+OpenMM system/state XML
+checkpoint
+simulation log
+ligand DCD
+hydration counts
+summary/QC outputs
+```
+
+Saving the full solvent DCD is optional and disabled by default to reduce storage.
+
+### Interpretation boundary
+
+09j performs no ΔG, entropy or affinity calculation. Energies of different simulation boxes must not be directly subtracted.
+
+Different seeds do not guarantee convergence, and all replicas share the same initial ligand geometry. A stronger comparison requires adequate bound-state replicas, convergence checks and explicit consideration of alternative microstates.
+
+A short local CPU execution was used to verify code execution, preparation, export and analysis. This technical verification is **not** a scientific result. Windows/CUDA production results must only be reported once the corresponding CUDA runs and QC outputs have actually completed.
+
+---
+
+## 09k — MOL00583–EGFR bound-complex replicas on Windows/CUDA
+
+09k extends the original 1 ns 09h simulation by running **multiple longer replicas of the bound MOL00583–EGFR complex** on the Windows workstation with the NVIDIA RTX 4090.
+
+It reuses the portable 09h system and the same neutral MOL00583 microstate.
+
+Use:
+
+```text
+C:\Users\Roberto\PEARL
+```
+
+and the Jupyter kernel:
+
+```text
+Python (PEARL GPU)
+```
+
+### Scientific purpose
+
+The original 09h result is based on a single 1 ns production trajectory. 09k addresses the need for broader dynamic sampling by creating multiple stochastic branches from the same equilibrated/bound structural state.
+
+The workflow is:
+
+```text
+09h 1 ns bound endpoint
+        ↓
+same physical system / same neutral ligand microstate
+        ↓
+new velocities + different seeds
+        ↓
+three longer bound replicas
+```
+
+These simulations are **not three independently prepared structures**. They start from the same 09h endpoint and therefore test stochastic robustness around a shared structural starting point.
+
+They must not be presented as automatic proof of convergence.
+
+### Execution modes
+
+Technical test:
+
+```text
+RUN_MD=True
+FAST_TEST_MODE=True
+```
+
+This runs one 50 ps production replica after 10 ps NPT.
+
+Extended production:
+
+```text
+RUN_MD=True
+FAST_TEST_MODE=False
+```
+
+Production protocol:
+
+```text
+3 replicas
+10 ns production / replica
+100 ps NPT before each production
+new velocities and distinct seeds
+```
+
+The RTX 4090 benchmark estimated approximately seven hours for production dynamics alone; equilibration, trajectory writing and analysis add further time.
+
+Do not run another MD notebook concurrently on the same GPU.
+
+### Starting state and portability
+
+The Windows package contains the parametrized 09h system and portable XML states, including:
+
+```text
+production_system.xml
+production_integrator.xml
+equilibrated.xml
+production_final.xml
+physical_system.xml
+```
+
+The source 09h production run is the 1000 ps run, not the 50 ps test.
+
+The XML states transfer coordinates, velocities and periodic box information, but they do not guarantee a bitwise-identical stochastic continuation across platforms. Mac binary checkpoints were not transferred.
+
+All starting-state choices and random seeds must remain documented.
+
+### Analyses
+
+09k stores and compares:
+
+- ligand conformational RMSD;
+- ligand RMSD after EGFR-based alignment where appropriate;
+- geometric radius on ligand heavy atoms;
+- ligand/site distance diagnostics;
+- receptor–ligand heavy-atom contacts;
+- local receptor Cα RMSF;
+- retention-related geometric metrics;
+- per-replica summaries and QC.
+
+For direct comparison with 09j, the first 20% of production is discarded.
+
+Heavy-atom contacts use a 4 Å cutoff in the 09j/09k comparative analysis. Local RMSF focuses on receptor residues initially within 5 Å of the ligand.
+
+The fraction within 8 Å of the center of the initially neighboring receptor residues is only a geometric diagnostic and must be interpreted together with distance, RMSD and contact metrics.
+
+09k does not include hydrogen-bond analysis or protonation-population analysis.
+
+### Outputs
+
+Runs are written under:
+
+```text
+outputs/pipeline_5_09k_bound_replicates/
+```
+
+Each replica stores:
+
+```text
+system/integrator XML
+states
+checkpoint
+solute DCD
+simulation log
+metrics
+contact tables
+local RMSF outputs
+summary/QC files
+```
+
+The original 09h topology, atom ordering and parameters must be retained because they are required for downstream energetic analysis.
+
+The old 09i notebook does not automatically consume 09k replicas. Any replica-based endpoint energetic analysis requires an explicitly adapted reader and harmonized protocol.
+
+### Technical validation and interpretation boundary
+
+A minimal local CPU execution using the real system completed preparation, short equilibration, production, export and analysis with technical QC passed. This only validates code execution.
+
+The full CUDA production must be judged from the Windows notebook outputs and QC files when completed.
+
+As in 09j:
+
+```text
+different seeds ≠ proof of convergence
+neutral microstate ≠ physiological protonation proof
+MD stability ≠ binding affinity
+```
+
+MOL00583 remains:
+
+```text
+TIER_1_PRIMARY_COMPUTATIONAL_LEAD
+```
+
+and is not experimentally validated.
+
+
+---
+
 ## Pipeline 5 funnel
 
 ```text
@@ -645,6 +954,13 @@ MOL00583–EGFR MD: 50 ps test and 1 ns production
         ↓
 09i
 GBn2/ACE endpoint: 3-snapshot test and 50-snapshot analysis
+        ↓
+Windows/CUDA follow-up
+        ├── 09j  MOL00583 free in water
+        │        technical test → planned/recorded replicated production as documented
+        │
+        └── 09k  MOL00583–EGFR bound replicas
+                 technical test → 3 × 10 ns CUDA production protocol
 ```
 
 ---
@@ -697,6 +1013,47 @@ print("AmberTools available:", AmberToolsToolkitWrapper.is_available())
 This corrects executable discovery; it does not install missing software. 09i reuses saved charges and does not invoke AmberTools.
 
 Use `PLATFORM="CPU"` for the verified Mac setup. The OpenCL plugin was present but device initialization returned `No compatible OpenCL platform is available`; changing the platform string alone does not enable a GPU. 09i defaults to `CPU_THREADS=4`. For another machine, test GPU context creation before running a full calculation.
+
+### Windows / CUDA environment for 09j–09k
+
+The portable Windows project root is:
+
+```text
+C:\Users\Roberto\PEARL
+```
+
+The Windows follow-up notebooks are intended to use:
+
+```text
+OS: Windows
+GPU: NVIDIA RTX 4090
+Jupyter kernel: Python (PEARL GPU)
+```
+
+The portable package includes selected 09f/09g inputs plus the parametrized 09h system, portable XML states and the solute trajectory needed for downstream analysis. It does not automatically install software or reproduce every file from the Mac environment.
+
+Before a Windows run:
+
+1. extract the portable package without creating a nested second `PEARL` directory;
+2. verify all transferred files against `MANIFEST_SHA256.json`;
+3. point notebook `PROJECT_ROOT` to `Path(r"C:\Users\Roberto\PEARL")`;
+4. verify NVIDIA driver, CUDA-enabled OpenMM context and the `Python (PEARL GPU)` kernel before running production;
+5. do not regenerate ligand chemistry unless explicitly required.
+
+The portable 09h state files include:
+
+```text
+production_system.xml
+production_integrator.xml
+equilibrated.xml
+production_final.xml
+physical_system.xml
+```
+
+The package preserves the 09h system and the neutral MOL00583 microstate. Binary Mac checkpoints were not transferred. XML portability does not imply bitwise-identical stochastic continuation.
+
+09j and 09k are designed so that the existing parametrized system can be reused without requiring AmberTools/OpenFF/RDKit for the basic Windows production benchmark, provided the transferred hashes and chemistry audit pass.
+
 
 ### REINVENT4
 
@@ -775,9 +1132,13 @@ The notebooks should be run sequentially:
 09h
  ↓
 09i
+ ↓
+post-selection Windows/CUDA follow-up
+ ├── 09j  free MOL00583 in water
+ └── 09k  bound MOL00583–EGFR replicas
 ```
 
-Several stages depend on files exported by the previous notebook, so the `outputs/` directory should be preserved between runs.
+Several stages depend on files exported by the previous notebook, so the `outputs/` directory should be preserved between runs. For 09j–09k, also preserve the transferred 09h topology, atom ordering, parameter cache and XML states because these define the chemistry and system identity used for the Windows follow-up.
 
 09c, 09e and 09f contain external-tool stages:
 
@@ -806,7 +1167,11 @@ outputs/
 ├── pipeline_5_pharmacophore_09g_integrated_lead_selection/
 ├── pipeline_5_pharmacophore_09h_mol00583_md/
 │   └── <unique_run>/
-└── pipeline_5_pharmacophore_09i_mol00583_endpoint/
+├── pipeline_5_pharmacophore_09i_mol00583_endpoint/
+│   └── <unique_run>/
+├── pipeline_5_09j_free_ligand/
+│   └── <unique_run>/
+└── pipeline_5_09k_bound_replicates/
     └── <unique_run>/
 ```
 
@@ -850,6 +1215,10 @@ Pipeline 5 is a **computational prototype** and its output should be interpreted
 8. `MOL00583` is therefore a **primary computational lead for follow-up**, not an experimentally validated EGFR inhibitor.
 9. 09h retention and 09i negative endpoint values are preliminary, model-dependent evidence. One 1 ns trajectory does not establish convergence; the observed temporal changes must be reported.
 10. Experimental binding, functional and selectivity assays would be required to establish biological activity.
+11. 09j studies only the neutral MOL00583 microstate inherited from 09h; it does not provide a quantitative pKa/protonation-state population model and is not constant-pH MD.
+12. The 09j free-ligand and 09k bound-complex replicas use different systems and must not be interpreted by subtracting total box energies.
+13. The three 09k replicas are stochastic branches from the same 09h endpoint with new velocities/seeds, not three independently prepared structures; different seeds alone do not establish convergence.
+14. Windows/CUDA technical-test success demonstrates code/platform execution only. Scientific conclusions should use completed production runs with QC and explicit convergence assessment.
 
 ---
 
@@ -868,9 +1237,11 @@ peptide MD
 → multi-criterion lead selection
 → selected-lead MD validation
 → endpoint energetic analysis
+→ free-ligand Windows/CUDA MD
+→ longer replicated bound-complex Windows/CUDA MD
 ```
 
-The 09g computational priority is preserved after 09h–09i (no comparative reranking was performed):
+The 09g computational priority is preserved after 09h–09i and through the 09j–09k follow-up design (no comparative reranking of the four finalists is performed):
 
 ```text
 1. MOL00583  — primary computational lead
@@ -879,7 +1250,7 @@ The 09g computational priority is preserved after 09h–09i (no comparative rera
 4. MOL00273  — orthogonal follow-up lead
 ```
 
-The most important conclusion is not that all scoring methods agree, but that the pipeline explicitly preserves their **convergence and disagreement** and uses those differences as part of the final scientific interpretation.
+The most important conclusion is not that all scoring methods agree, but that the pipeline explicitly preserves their **convergence and disagreement** and uses those differences as part of the final scientific interpretation. The Windows/CUDA 09j–09k extensions add free-versus-bound and replicate-level dynamical context, but they do not convert computational prioritization into experimental validation.
 
 ---
 
