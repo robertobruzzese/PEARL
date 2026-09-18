@@ -385,4 +385,4 @@ The central result is not a validated inhibitor. It is a reproducible chain of c
 
 ## Selected CSV outputs
 
-The [selected outputs](selected_outputs/README.md) folder contains 33 curated CSV tables from Pipelines 1–5, including peptide sequences, molecule SMILES, rankings and comparison results. Its index records each CSV’s source path and any missing files. Production results are used where test and production variants coexist. Structure and trajectory files referenced by these tables are not included.
+The [selected outputs](selected_outputs/README.md) folder contains 56 curated CSV tables from Pipelines 1–5. It includes peptide sequences, molecule SMILES, rankings, comparison results and the later 09h–09k analyses. Its index records each CSV’s source path and any missing files. Production results are used where test and production variants coexist. Structure and trajectory files referenced by these tables are not included.
