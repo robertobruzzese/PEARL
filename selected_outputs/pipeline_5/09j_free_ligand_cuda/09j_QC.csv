@@ -1,0 +1,4 @@
+replica,mean_temperature_K,mean_density_g_mL,finite_log,temperature_OK,density_OK,QC_PASS
+replica_01_seed20260921,299.8536095517521,0.9957481554733035,True,True,True,True
+replica_02_seed20260922,300.0292424925008,0.9965065533695515,True,True,True,True
+replica_03_seed20260923,300.4127323747313,0.9960659214924309,True,True,True,True

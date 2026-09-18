@@ -1,0 +1,5 @@
+check,pass
+all_requested_snapshots,True
+finite_energies,True
+MM_independent_validation,True
+sum_components_matches,True

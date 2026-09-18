@@ -1,0 +1,9 @@
+check,pass
+complete_frames,True
+finite_coordinates,True
+finite_thermodynamics,True
+mean_temperature_within_5K,True
+mean_density_0.95_to_1.05_g_mL,True
+no_unwrapped_bond_over_3A,True
+no_ligand_center_jump_over_1nm_per_saved_frame,True
+production_restraints_absent,True

@@ -1,0 +1,4 @@
+donor,hydrogen,acceptor,donor_label,acceptor_label,occupancy
+1370,1371,9303,ARG84-NE,LIG1-N18,0.0025
+3549,3551,9300,ARG231-NH1,LIG1-O15,0.025
+9305,9328,1370,LIG1-N20,ARG84-NE,0.005

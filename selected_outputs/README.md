@@ -50,4 +50,38 @@ These CSVs may refer to structural files or trajectories that are not included h
 
 None.
 
-Copied: 33 CSVs. Missing: 0 CSVs.
+Initial selection: 33 CSVs. Missing: 0 CSVs.
+
+## Later Pipeline 5 analyses (09h–09k)
+
+These 23 CSVs were added after the initial selection. The 09h and 09i tables came from the Mac `outputs/` tree. The 09j and 09k tables came from a copy of the Windows CUDA production `outputs/` tree. Source paths below are relative to the respective `outputs/` directory.
+
+| Stage | Included CSV | Original output path |
+|---|---|---|
+| 09h_bound_md | `09h_QC.csv` | `pipeline_5_pharmacophore_09h_mol00583_md/20260912T174721_843455Z_seed20260912/tables/09h_QC.csv` |
+| 09h_bound_md | `trajectory_metrics.csv` | `pipeline_5_pharmacophore_09h_mol00583_md/20260912T174721_843455Z_seed20260912/tables/trajectory_metrics.csv` |
+| 09h_bound_md | `contact_persistence.csv` | `pipeline_5_pharmacophore_09h_mol00583_md/20260912T174721_843455Z_seed20260912/tables/contact_persistence.csv` |
+| 09h_bound_md | `hydrogen_bonds_geometric.csv` | `pipeline_5_pharmacophore_09h_mol00583_md/20260912T174721_843455Z_seed20260912/tables/hydrogen_bonds_geometric.csv` |
+| 09h_bound_md | `binding_site_CA_RMSF.csv` | `pipeline_5_pharmacophore_09h_mol00583_md/20260912T174721_843455Z_seed20260912/tables/binding_site_CA_RMSF.csv` |
+| 09i_endpoint | `09i_QC.csv` | `pipeline_5_pharmacophore_09i_mol00583_endpoint/20260913T104616_464776Z_production/tables/09i_QC.csv` |
+| 09i_endpoint | `energy_summary.csv` | `pipeline_5_pharmacophore_09i_mol00583_endpoint/20260913T104616_464776Z_production/tables/energy_summary.csv` |
+| 09i_endpoint | `temporal_blocks.csv` | `pipeline_5_pharmacophore_09i_mol00583_endpoint/20260913T104616_464776Z_production/tables/temporal_blocks.csv` |
+| 09i_endpoint | `selected_frames.csv` | `pipeline_5_pharmacophore_09i_mol00583_endpoint/20260913T104616_464776Z_production/tables/selected_frames.csv` |
+| 09j_free_ligand_cuda | `09j_QC.csv` | `pipeline_5_09j_free_ligand/20260914T085625_154393Z/09j_QC.csv` |
+| 09j_free_ligand_cuda | `conformation_summary.csv` | `pipeline_5_09j_free_ligand/20260914T085625_154393Z/conformation_summary.csv` |
+| 09j_free_ligand_cuda | `hydration_summary.csv` | `pipeline_5_09j_free_ligand/20260914T085625_154393Z/hydration_summary.csv` |
+| 09j_free_ligand_cuda | `free_bound_metrics.csv` | `pipeline_5_09j_free_ligand/20260914T085625_154393Z/free_bound_metrics.csv` |
+| 09k_bound_replicates_cuda | `QC.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/QC.csv` |
+| 09k_bound_replicates_cuda | `bound_metrics.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/bound_metrics.csv` |
+| 09k_bound_replicates_cuda | `comparison_summary.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/comparison_summary.csv` |
+| 09k_bound_replicates_cuda | `free_bound_comparison.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/free_bound_comparison.csv` |
+| 09k_bound_replicates_cuda | `replica_01_seed20260931/contact_persistence.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/replica_01_seed20260931/contact_persistence.csv` |
+| 09k_bound_replicates_cuda | `replica_01_seed20260931/site_RMSF.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/replica_01_seed20260931/site_RMSF.csv` |
+| 09k_bound_replicates_cuda | `replica_02_seed20260932/contact_persistence.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/replica_02_seed20260932/contact_persistence.csv` |
+| 09k_bound_replicates_cuda | `replica_02_seed20260932/site_RMSF.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/replica_02_seed20260932/site_RMSF.csv` |
+| 09k_bound_replicates_cuda | `replica_03_seed20260933/contact_persistence.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/replica_03_seed20260933/contact_persistence.csv` |
+| 09k_bound_replicates_cuda | `replica_03_seed20260933/site_RMSF.csv` | `pipeline_5_09k_bound_replicates/20260914T100036_153833Z/replica_03_seed20260933/site_RMSF.csv` |
+
+Production run IDs: 09h `20260912T174721_843455Z_seed20260912`; 09i `20260913T104616_464776Z_production`; 09j `20260914T085625_154393Z`; 09k `20260914T100036_153833Z`. The 09j and 09k run summaries report three 10 ns replicas and passing technical QC. Their comparisons are exploratory; they do not establish convergence, binding affinity, or experimental validation. Large trajectory, checkpoint, and system files are not included.
+
+Total selected: 56 CSVs.

@@ -1,0 +1,7 @@
+,RMSD_conformation_A,RMSD_conformation_A,RMSD_conformation_A,RMSD_conformation_A,heavy_geometric_radius_A,heavy_geometric_radius_A,heavy_geometric_radius_A,heavy_geometric_radius_A
+,mean,std,min,max,mean,std,min,max
+series,,,,,,,,
+bound_09h_1ns,1.1298658,0.25722697,0.6874612,2.0441642,5.248666,0.06323542,5.049312,5.4048305
+replica_01_seed20260921,1.9495041,0.4445197,0.79368764,2.8584237,5.4691157,0.106575444,5.10956,5.7341976
+replica_02_seed20260922,1.9642674,0.4671569,0.61602956,2.8186533,5.371393,0.1197162,5.022642,5.690849
+replica_03_seed20260923,2.0019372,0.4243164,0.8409823,2.8995368,5.4828124,0.1324448,5.030548,5.7772307

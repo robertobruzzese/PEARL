@@ -1,0 +1,4 @@
+replica,mean_temperature_K,mean_density_g_mL,technical_qc_pass,fraction_site_center_within_8A
+replica_01_seed20260931,300.31056357177573,1.0019892596209379,True,1.0
+replica_02_seed20260932,300.27706431326834,1.0019777216420311,True,1.0
+replica_03_seed20260933,300.32185381035697,1.0019809895061733,True,1.0
