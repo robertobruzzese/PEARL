@@ -382,3 +382,7 @@ PEARL now implements a five-pipeline, end-to-end computational prototype:
 5. peptide–EGFR MD ensembles are translated into a pharmacophore and a small-molecule discovery funnel ending in one primary and three orthogonal computational leads.
 
 The central result is not a validated inhibitor. It is a reproducible chain of computational evidence that narrows a kinase-interface design problem to a compact set of peptide and small-molecule hypotheses suitable for more rigorous simulation and, ultimately, experimental testing.peptides and molecular candidates are research hypotheses and are **not validated drugs, inhibitors or therapeutic compounds**.
+
+## Selected CSV outputs
+
+The [selected outputs](selected_outputs/README.md) folder contains 33 curated CSV tables from Pipelines 1–5, including peptide sequences, molecule SMILES, rankings and comparison results. Its index records each CSV’s source path and any missing files. Production results are used where test and production variants coexist. Structure and trajectory files referenced by these tables are not included.
