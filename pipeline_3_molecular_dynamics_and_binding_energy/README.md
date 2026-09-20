@@ -37,7 +37,7 @@ CF05  = IGERCEYRELK
 
 Their roles are:
 
-- **F0010** — natural 11-aa reference peptide derived from the EGFR B–D interface;
+- **F0010** — natural 11-aa reference peptide derived from the extracellular EGF–EGFR B–D interface;
 - **CF06** — strongest Rosetta-supported counterfactual candidate and final endpoint-energy lead;
 - **CF02** — strongest 1 ns MD dynamic-stability candidate;
 - **CF05** — pair-scoring lead added in `07f` specifically to test the ranking disagreement discussed with Prof. Leoni.
@@ -67,14 +67,14 @@ MM/GBSA-like endpoint comparison
 - **Target:** Epidermal Growth Factor Receptor, EGFR
 - **Reference structure:** PDB `3NJP`
 - **Interface studied:** chains `B–D`
-- **Receptor chain:** `B`
-- **Partner / peptide chain:** `D`
+- **Receptor chain:** `B` (extracellular EGFR)
+- **Native ligand chain:** `D` (EGF)
 - **Reference short peptide:** `F0010 = IGERCQYRDLK`
 - **F0010 structural mapping:** chain D residues 38–48
 - **Heavy-atom contact cutoff:** 4.5 Å
 - **Persistent-contact threshold:** ≥ 50% of analysed MD frames
 
-The B–D interface was identified and structurally characterized in the earlier PEARL pipelines. Pipeline 3 tests whether this interface and the derived peptide contacts persist dynamically.
+The B–D interface corresponds to the extracellular EGF–EGFR interaction, with EGFR chain B and EGF chain D, and was structurally characterized in the earlier PEARL pipelines. Pipeline 3 tests whether this interface and the derived peptide contacts persist dynamically.
 
 ---
 
@@ -160,7 +160,7 @@ Notebook `07c` is primarily an integration and validation stage: it combines the
 
 ## `07a_EGFR_Dimer_OpenMM_MD_Setup.ipynb`
 
-This notebook prepares the EGFR B–D dimer interface for molecular dynamics using OpenMM.
+This notebook prepares the extracellular EGF–EGFR B–D interface for molecular dynamics using OpenMM.
 
 Main operations include:
 
@@ -186,7 +186,7 @@ It does not by itself provide evidence of interface stability or peptide affinit
 
 ## `07b_EGFR_Dimer_MD_Contact_Persistence.ipynb`
 
-This notebook performs and analyses the production MD of the EGFR B–D interface.
+This notebook performs and analyses the production MD of the extracellular EGF–EGFR B–D interface.
 
 The production prototype consists of a 1 ns trajectory sampled into 500 protein-only frames.
 
@@ -213,7 +213,7 @@ The analysis identified:
 
 The result supports the presence of a dynamically maintained B–D interaction network during the 1 ns prototype simulation.
 
-This should be interpreted as dynamic computational support for the selected interface, not as experimental confirmation of the biological dimer interface.
+This should be interpreted as dynamic computational support for the selected extracellular EGF–EGFR interface, not as experimental confirmation of biological binding or activity.
 
 ---
 
@@ -684,7 +684,7 @@ Pipeline 3 successfully adds a dynamic and energetic validation layer to the PEA
 
 The principal findings are:
 
-1. the EGFR B–D interface retains a substantial persistent-contact network during the 1 ns production MD;
+1. the extracellular EGF–EGFR B–D interface retains a substantial persistent-contact network during the 1 ns production MD;
 2. all 11 F0010 positions remain represented in the MD-persistent interface;
 3. six F0010 positions are supported simultaneously by FoldX hotspot analysis and MD persistence;
 4. among the original `07d` candidates, `CF02` and `CF06` are dynamically more rigid than the natural F0010 reference;
