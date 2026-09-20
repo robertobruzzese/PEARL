@@ -3,9 +3,9 @@
 
 **From Dimers to Drugs**
 
-PEARL is a computational drug-discovery research prototype that reverse-engineers a kinase protein–protein interface and uses structural bioinformatics, molecular modelling, molecular dynamics (MD), protein AI and cheminformatics to prioritize peptide and small-molecule inhibitor hypotheses.
+PEARL is a computational drug-discovery research prototype that reverse-engineers the extracellular EGF–EGFR protein–protein interface and uses structural bioinformatics, molecular modelling, molecular dynamics (MD), protein AI and cheminformatics to prioritize peptide and small-molecule inhibitor hypotheses.
 
-The current implementation is developed around the **EGFR kinase-domain asymmetric dimer (PDB `3NJP`)**, focusing on the interface between chains **B and D**.
+The current implementation is developed around the **extracellular EGF–EGFR complex (PDB `3NJP`)**, focusing on the interface between **EGFR chain B and EGF chain D**.
 
 > **Repository status:** five implemented computational pipelines spanning interface analysis, peptide design, molecular dynamics, AI-guided peptide redesign, MD-derived pharmacophore construction and small-molecule lead prioritization. All reported leads remain computational hypotheses; no experimental binding, inhibition, efficacy or safety validation is claimed.
 
@@ -14,7 +14,7 @@ The current implementation is developed around the **EGFR kinase-domain asymmetr
 ## Workflow at a glance
 
 ```text
-EGFR kinase dimer (3NJP, chains B–D)
+Extracellular EGF–EGFR complex (3NJP: EGFR chain B–EGF chain D)
         ↓
 Pipeline 1 — interface mapping and hotspot discovery
         ↓
@@ -46,8 +46,8 @@ PEARL follows a layered-validation philosophy: no surrogate score, force-field e
 | Target | Epidermal Growth Factor Receptor (EGFR) |
 | Reference structure | PDB `3NJP` |
 | Studied interface | Chains `B–D` |
-| Receptor chain | `B` |
-| Partner/peptide chain | `D` |
+| Receptor chain | `B` (extracellular EGFR) |
+| Native ligand chain | `D` (EGF) |
 | Short natural reference | `F0010` |
 | F0010 sequence | `IGERCQYRDLK` |
 | F0010 mapping | Chain D residues 38–48 |
@@ -381,7 +381,7 @@ PEARL now implements a five-pipeline, end-to-end computational prototype:
 4. ESM-2 and ProteinMPNN expand the peptide search, with FoldX/Rosetta, MD, endpoint and ESMFold follow-up plus conservative developability and multi-objective integration;
 5. peptide–EGFR MD ensembles are translated into a pharmacophore and a small-molecule discovery funnel ending in one primary and three orthogonal computational leads.
 
-The central result is not a validated inhibitor. It is a reproducible chain of computational evidence that narrows a kinase-interface design problem to a compact set of peptide and small-molecule hypotheses suitable for more rigorous simulation and, ultimately, experimental testing.peptides and molecular candidates are research hypotheses and are **not validated drugs, inhibitors or therapeutic compounds**.
+The central result is not a validated inhibitor. It is a reproducible chain of computational evidence that narrows an extracellular EGF–EGFR interface design problem to a compact set of peptide and small-molecule hypotheses suitable for more rigorous simulation and, ultimately, experimental testing. Peptides and molecular candidates are research hypotheses and are **not validated drugs, inhibitors or therapeutic compounds**.
 
 ## Selected CSV outputs
 
