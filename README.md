@@ -3,13 +3,15 @@
 
 **From Dimers to Drugs**
 
-PEARL is a computational drug-discovery research prototype that reverse-engineers the extracellular EGF–EGFR protein–protein interface and uses structural bioinformatics, molecular modelling, molecular dynamics (MD), protein AI and cheminformatics to prioritize peptide and small-molecule inhibitor hypotheses.
+PEARL is a computational drug-discovery research prototype that reverse-engineers the extracellular EGF–EGFR protein–protein interface and uses structural bioinformatics, molecular modelling, molecular dynamics (MD), protein AI and cheminformatics to prioritize peptide and small-molecule binding and modulation hypotheses.
 
 The current implementation is developed around the **extracellular EGF–EGFR complex (PDB `3NJP`)**, focusing on the interface between **EGFR chain B and EGF chain D**.
 
 > **Repository status:** five implemented computational pipelines spanning interface analysis, peptide design, molecular dynamics, AI-guided peptide redesign, MD-derived pharmacophore construction and small-molecule lead prioritization. All reported leads remain computational hypotheses; no experimental binding, inhibition, efficacy or safety validation is claimed.
 
 ---
+
+> **Interpretation of computational evidence.** PEARL prioritizes candidates on the basis of computational evidence for structural compatibility, interaction, dynamics, docking and energetic descriptors. These results support **binding/modulation hypotheses**; they do not by themselves demonstrate competition with EGF, biological inhibition of EGFR, functional response, or therapeutic efficacy. Any inhibitory mechanism therefore remains a hypothesis to be tested experimentally.
 
 ## Workflow at a glance
 
@@ -386,3 +388,4 @@ The central result is not a validated inhibitor. It is a reproducible chain of c
 ## Selected CSV outputs
 
 The [selected outputs](selected_outputs/README.md) folder contains 56 curated CSV tables from Pipelines 1–5. It includes peptide sequences, molecule SMILES, rankings, comparison results and the later 09h–09k analyses. Its index records each CSV’s source path and any missing files. Production results are used where test and production variants coexist. Structure and trajectory files referenced by these tables are not included.
+
