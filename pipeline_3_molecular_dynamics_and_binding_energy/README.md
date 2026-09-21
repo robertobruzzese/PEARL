@@ -1,19 +1,15 @@
 # PEARL Pipeline 3 — Molecular Dynamics and Binding-Energy Analysis
 
-This directory contains the molecular-dynamics and energetic-validation stage of the PEARL project.
+This directory contains the molecular-dynamics and energetic-evaluation stage of the PEARL project.
 
-Pipeline 3 extends the structural and sequence-based prioritization developed in Pipeline 2 by testing whether the selected EGFR–peptide interfaces remain stable over time in an explicit-solvent molecular-dynamics environment and by adding a comparative endpoint-energy estimate.
+Pipeline 3 extends the structural and sequence-based prioritization developed in Pipeline 2 by testing whether the selected extracellular EGFR–peptide interfaces remain stable over time in an explicit-solvent molecular-dynamics environment and by adding a comparative endpoint-energy estimate.
 
 The main purpose of this pipeline is therefore to move from:
 
 ```text
 static structural prioritization
-```
-
-to:
-
-```text
-dynamic interface validation
+        ↓
+dynamic interface assessment
         +
 comparative energetic evaluation
 ```
@@ -26,23 +22,21 @@ The analyses contained in this directory are computational and do not constitute
 
 Pipeline 2 identified a compact set of peptide candidates through hotspot-centred miniaturization, CLEAR-inspired optimization, FoldX evaluation and Rosetta FlexPepDock refinement.
 
-The main sequences carried forward into Pipeline 3 are:
+The main sequences carried forward into the direct Pipeline 3 peptide comparison are:
 
 ```text
 F0010 = IGERCQYRDLK
 CF06  = IGERCQYRELR
 CF02  = IGERSQYRELK
-CF05  = IGERCEYRELK
 ```
 
 Their roles are:
 
-- **F0010** — natural 11-aa reference peptide derived from the extracellular EGF–EGFR B–D interface;
-- **CF06** — strongest Rosetta-supported counterfactual candidate and final endpoint-energy lead;
-- **CF02** — strongest 1 ns MD dynamic-stability candidate;
-- **CF05** — pair-scoring lead added in `07f` specifically to test the ranking disagreement discussed with Prof. Leoni.
+- **F0010** — 11-aa reference peptide extracted from the native EGF sequence and corresponding to chain D residues 38–48 in the source EGF structure;
+- **CF06** — Rosetta-supported counterfactual candidate;
+- **CF02** — counterfactual candidate showing the strongest short-timescale dynamic-stability metrics in the 1 ns comparison.
 
-Pipeline 3 does not replace the Pipeline 2 structural analyses. It adds an independent dynamic validation layer.
+Pipeline 3 does not replace the Pipeline 2 structural analyses. It adds a dynamic and energetic computational assessment layer.
 
 ```text
 Pipeline 2
@@ -55,7 +49,7 @@ explicit-solvent MD
         ↓
 RMSD / RMSF / contact persistence
         ↓
-dynamic hotspot validation
+interface/source-region analysis
         ↓
 MM/GBSA-like endpoint comparison
 ```
@@ -74,7 +68,7 @@ MM/GBSA-like endpoint comparison
 - **Heavy-atom contact cutoff:** 4.5 Å
 - **Persistent-contact threshold:** ≥ 50% of analysed MD frames
 
-The B–D interface corresponds to the extracellular EGF–EGFR interaction, with EGFR chain B and EGF chain D, and was structurally characterized in the earlier PEARL pipelines. Pipeline 3 tests whether this interface and the derived peptide contacts persist dynamically.
+The B–D interface corresponds to the extracellular EGF–EGFR interaction, with EGFR chain B and EGF chain D. Pipeline 3 first examines this interface in the full EGF–EGFR complex and then directly simulates the extracted F0010 peptide and selected counterfactual peptides bound to EGFR.
 
 ---
 
@@ -98,7 +92,7 @@ Production frames  500
 The general preparation protocol is:
 
 ```text
-input receptor–peptide structure
+input receptor–partner structure
         ↓
 structural repair
         ↓
@@ -121,7 +115,7 @@ production molecular dynamics
 trajectory analysis
 ```
 
-The 1 ns trajectories used here should be interpreted as a computational prototype suitable for comparative prioritization, not as a fully converged long-timescale molecular-dynamics study.
+The 1 ns trajectories used here should be interpreted as computational prototypes suitable for comparative prioritization, not as fully converged long-timescale molecular-dynamics studies.
 
 ---
 
@@ -132,7 +126,8 @@ The 1 ns trajectories used here should be interpreted as a computational prototy
 - `07c_EGFR_MD_Hotspot_and_Interface_Validation.ipynb`
 - `07d_Selected_Peptide_MD_Comparison.ipynb`
 - `07e_Selected_Peptide_MMGBSA_Endpoint_Comparison.ipynb`
-- `07f_CF05_MD_Conformational_and_Integrated_Comparison.ipynb`
+
+The filenames of `07a` and `07b` are retained for reproducibility, although the biological system analysed is the extracellular EGF–EGFR B–D interaction rather than an EGFR kinase-domain dimer.
 
 ---
 
@@ -148,11 +143,9 @@ The 1 ns trajectories used here should be interpreted as a computational prototy
 07d_Selected_Peptide_MD_Comparison
         ↓
 07e_Selected_Peptide_MMGBSA_Endpoint_Comparison
-        ↓
-07f_CF05_MD_Conformational_and_Integrated_Comparison
 ```
 
-Notebook `07c` is primarily an integration and validation stage: it combines the MD-derived contact information from `07b` with hotspot information generated in earlier PEARL pipelines rather than launching another long simulation.
+Notebook `07c` is primarily an integration and analysis stage: it combines the MD-derived contact information from `07b` with FoldX-derived information generated in earlier PEARL stages rather than launching another long simulation.
 
 ---
 
@@ -178,9 +171,7 @@ Main operations include:
 - checking system quality before production MD;
 - exporting a production-ready state.
 
-This notebook establishes the physical simulation environment used by the subsequent Pipeline 3 notebooks.
-
-It does not by itself provide evidence of interface stability or peptide affinity.
+This notebook establishes the physical simulation environment used by the subsequent Pipeline 3 notebooks. It does not by itself provide evidence of interface stability or peptide affinity.
 
 ---
 
@@ -204,32 +195,43 @@ Main analyses include:
 
 ### Main result
 
-The analysis identified:
+The verified analysis identified:
 
 ```text
-147 unique B–D contacts observed during MD
-80 persistent contacts with persistence ≥ 50%
+144 unique B–D contacts observed during MD
+78 persistent contacts with persistence ≥ 50%
+67 initial contacts retained among the persistent set
+initial-contact retention = 0.858974
 ```
 
-The result supports the presence of a dynamically maintained B–D interaction network during the 1 ns prototype simulation.
+A separate periodic-boundary/continuity diagnostic over all 500 production frames gave essentially identical direct and minimum-image B–D distances:
 
-This should be interpreted as dynamic computational support for the selected extracellular EGF–EGFR interface, not as experimental confirmation of biological binding or activity.
+```text
+mean direct distance       2.669888 Å
+mean minimum-image distance 2.669888 Å
+maximum discrepancy        ~9.3 × 10^-8 Å
+PBC continuity             PASS
+```
+
+No trajectory reconstruction was required.
+
+The result provides dynamic computational support for a maintained extracellular EGF–EGFR B–D interaction network during the 1 ns prototype simulation. It is not experimental confirmation of biological binding or activity.
 
 ---
 
 ## `07c_EGFR_MD_Hotspot_and_Interface_Validation.ipynb`
 
-This notebook integrates three sources of information:
+This notebook integrates information from:
 
 ```text
 static B–D interface
         +
-FoldX energetic hotspots
+historical FoldX BuildModel-derived design anchors
         +
 1 ns MD contact persistence
 ```
 
-The objective is to determine which residues are supported simultaneously by structural, energetic and dynamic evidence.
+The objective is to examine whether residues previously prioritized by structural/energetic criteria are also represented in the dynamically persistent interface.
 
 The reference short peptide is:
 
@@ -239,33 +241,35 @@ IGERCQYRDLK
 chain D residues 38–48
 ```
 
+Importantly, in `07c` residues D38–48 are analysed **while they are still part of the full EGF chain D**. This notebook therefore does not constitute an autonomous MD simulation of the extracted F0010 peptide. Direct bound-state MD of the extracted F0010 peptide is performed in `07d`.
+
 Main operations include:
 
-- loading the persistent-contact information generated in `07b`;
-- loading FoldX energetic-hotspot information from the earlier PEARL stages;
+- loading persistent-contact information generated in `07b`;
+- loading historical FoldX BuildModel-derived energetic design-anchor information;
 - mapping MD persistence onto chain D residues;
-- mapping F0010 onto the dynamic interface;
-- identifying residues supported by both FoldX and MD;
-- examining persistent receptor contacts involving the F0010 region.
+- mapping the D38–48 source region of F0010 onto the dynamic interface;
+- identifying residues with both FoldX-derived and MD support;
+- examining persistent receptor contacts involving the D38–48 source region.
 
 ### Main result
 
-For F0010:
+For the D38–48 F0010 source region:
 
 ```text
-11 / 11 peptide positions
-are supported by MD-persistent interface contacts
+10 / 11 positions
+are represented in MD-persistent interface contacts
 ```
 
 and:
 
 ```text
 6 / 11 positions
-are simultaneously supported as FoldX hotspots
-and MD-persistent interface residues
+have both historical FoldX-derived design-anchor support
+and MD-persistent interface support
 ```
 
-The six FoldX + MD-supported F0010 positions are associated with:
+The six positions are:
 
 ```text
 G39
@@ -276,13 +280,13 @@ R45
 L47
 ```
 
-The analysis also identified:
+The analysis identified:
 
 ```text
-32 persistent B–F0010 contacts
+34 persistent EGFR contacts involving EGF residues D38–48
 ```
 
-This provides cross-method computational support for the use of F0010 as a dynamically relevant short interface-derived reference peptide.
+These results provide computational support for persistence of the **source region of F0010 within the full EGF–EGFR complex**. Agreement between FoldX-derived prioritization and MD persistence is computational convergence, not experimental validation.
 
 ---
 
@@ -298,9 +302,7 @@ CF02  = IGERSQYRELK
 
 Each candidate is simulated using the same explicit-solvent OpenMM protocol.
 
-The comparison asks:
-
-> Do the optimized counterfactual peptides preserve or improve the dynamic receptor–peptide interface relative to the natural F0010 reference?
+The comparison asks whether the optimized counterfactual peptides preserve or improve dynamic receptor–peptide behaviour relative to **F0010, an 11-aa reference peptide extracted from the native EGF sequence**.
 
 Main analyses include:
 
@@ -320,15 +322,29 @@ Main analyses include:
 | **CF06** | 1.293 | 0.904 | **45** | 0.529 |
 | **F0010** | 1.966 | 1.164 | 43 | 0.541 |
 
-### Interpretation
+Under this 1 ns protocol, CF02 has the lowest peptide RMSD and RMSF and the highest mean contact persistence, whereas CF06 maintains the largest number of persistent receptor–peptide contacts.
 
-`CF02` shows the lowest peptide RMSD, the lowest RMSF and the highest mean contact persistence.
+F0010 remains dynamically associated with the receptor but is more flexible than the two counterfactual candidates over this short production trajectory.
 
-`CF06` maintains the largest number of persistent receptor–peptide contacts.
+### PBC and molecular-continuity verification
 
-`F0010` remains dynamically associated with the receptor but is more flexible than the two optimized counterfactual candidates under this 1 ns protocol.
+A separate diagnostic was performed on all 500 production frames for F0010, CF06 and CF02. Direct receptor–peptide distances and periodic minimum-image distances agreed to approximately `10^-7 Å` for every candidate:
 
-The dynamic evidence therefore does not produce exactly the same ranking as the static FoldX/Rosetta analyses, which is an important result of the layered PEARL validation strategy.
+```text
+F0010  direct mean = 2.633036 Å   PBC mean = 2.633036 Å   PASS
+CF06   direct mean = 2.677862 Å   PBC mean = 2.677862 Å   PASS
+CF02   direct mean = 2.685465 Å   PBC mean = 2.685465 Å   PASS
+```
+
+Overall PBC continuity:
+
+```text
+True
+```
+
+No trajectory reconstruction or repeat MD was required.
+
+The dynamic evidence does not produce exactly the same ordering as the earlier static FoldX/Rosetta analyses. This is interpreted as method-specific information rather than as evidence that one computational metric is universally definitive.
 
 ---
 
@@ -347,7 +363,13 @@ For each selected snapshot:
 
 The three terms are evaluated using the same snapshot geometry.
 
-The calculation is a **single-trajectory MM/GBSA-like endpoint estimate** using an AMBER-based molecular-mechanics model with implicit-solvent treatment.
+The calculation is a **single-trajectory MM/GBSA-like endpoint estimate**. In the verified run, all three candidates were evaluated with the same energetic protocol:
+
+```text
+Protein force field      AMBER ff14SB
+Implicit-solvent model   implicit/gbn2.xml
+Snapshots per candidate  50
+```
 
 More negative values are interpreted as more favourable only within this specific comparative protocol.
 
@@ -359,81 +381,37 @@ More negative values are interpreted as more favourable only within this specifi
 | **F0010** | −59.46 ± 5.96 |
 | **CF02** | −56.62 ± 4.63 |
 
-### Interpretation
+The `±` values above are the standard deviations across the 50 selected snapshots. These snapshots are **time-correlated frames sampled from a single trajectory for each candidate** and must not be interpreted as 50 independent MD replicates.
 
-The endpoint energetic ranking differs from the pure dynamic-stability ranking:
+Within this common protocol, the endpoint energetic ordering is:
 
 ```text
-Endpoint energetic proxy:
 CF06 > F0010 > CF02
 ```
 
-whereas the peptide RMSD/RMSF and mean contact-persistence metrics favour `CF02`.
+where `>` denotes a more favourable (more negative) endpoint-energy proxy, not experimentally demonstrated affinity.
 
-This disagreement is informative rather than contradictory: different computational methods probe different components of receptor–peptide behaviour.
+The endpoint ordering differs from the short-timescale dynamic-stability picture, in which CF02 shows the lowest RMSD/RMSF and highest mean contact persistence. Different computational observables probe different aspects of receptor–peptide behaviour.
 
-Within Pipeline 3, `CF06` emerges as the strongest energetic candidate, while `CF02` emerges as the strongest dynamic-stability candidate.
+The endpoint values are comparable only when the force field, implicit-solvent model, preparation procedure, atom selection, snapshot strategy and endpoint-energy definition are held consistent. They must not be combined directly with endpoint values produced by a different energetic protocol.
 
 ---
 
-## `07f_CF05_MD_Conformational_and_Integrated_Comparison.ipynb`
+## Supplementary 1-to-10 ns continuation notebook
 
-This notebook was added as a targeted follow-up to the third meeting with Prof. Leoni. Its purpose is to test the candidate that had been favoured by the empirical adjacent-pair score (`CF05`) using the same production-MD and endpoint-energy framework already applied to the established Pipeline 3 references.
-
-```text
-CF05 = IGERCEYRELK
-mutations vs F0010 = Q6E + D9E
-```
-
-The final run uses `FAST_TEST_MODE=False` and therefore performs a full 1 ns production trajectory with 500 analysed frames and a 50-snapshot endpoint calculation. The notebook also adds a descriptive conformational-state clustering step and writes representative medoid structures.
-
-### CF05 production result
-
-| Metric | CF05 |
-|---|---:|
-| Mean peptide RMSD | 2.370 Å |
-| Mean peptide RMSF | 2.351 Å |
-| Persistent contacts ≥50% | 43 |
-| Mean contact persistence | 0.611 |
-| Dominant conformational-state occupancy | 47.6% |
-| Endpoint energy | −49.18 ± 4.64 kcal/mol |
-
-### Four-candidate MD ranking
-
-| MD rank | Candidate | Mean RMSD (Å) | Mean RMSF (Å) | Persistent contacts ≥50% | Mean persistence |
-|---:|---|---:|---:|---:|---:|
-| **1** | **CF02** | **0.901** | **0.737** | 43 | 0.603 |
-| **2** | **CF06** | 1.293 | 0.904 | **45** | 0.529 |
-| 3 | F0010 | 1.966 | 1.164 | 43 | 0.541 |
-| 4 | CF05 | 2.370 | 2.351 | 43 | **0.611** |
-
-Although CF05 retains a substantial contact network, its much larger RMSD and RMSF indicate greater conformational mobility over the 1 ns production trajectory. The short 50 ps smoke test had temporarily suggested a more favourable picture, which is why only the 1 ns production result is used for the final interpretation.
-
-### Four-candidate endpoint ranking
+A separate notebook,
 
 ```text
-CF06   −65.66 ± 6.80 kcal/mol
-F0010  −59.46 ± 5.96 kcal/mol
-CF02   −56.62 ± 4.63 kcal/mol
-CF05   −49.18 ± 4.64 kcal/mol
+07d_OpenMM_continue_from_1ns_to_10ns.ipynb
 ```
 
-The resulting endpoint ranking is therefore:
+was prepared as an **accessory continuation workflow**. It is not part of the main `07a → 07e` Pipeline 3 execution sequence.
 
-```text
-CF06 > F0010 > CF02 > CF05
-```
+Its purpose is to restart F0010, CF06 and CF02 from their saved 1 ns OpenMM states and, if deliberately executed, extend each trajectory by a further 9 ns to reach 10 ns total.
 
-This follow-up resolves the specific pair-score-versus-Rosetta question without forcing all methods into a single winner:
+The notebook does not repeat minimization, NVT or NPT. It is kept separately because it is a continuation/extension workflow rather than a prerequisite for the results reported in the current Pipeline 3 analysis.
 
-```text
-Pair scoring  → CF05
-Rosetta       → CF06
-1 ns MD       → CF02
-Endpoint      → CF06
-```
-
-CF05 is therefore useful as evidence that the empirical pair score is interpretive rather than definitive: its favourable local pair pattern is not confirmed as the strongest candidate by the longer MD or endpoint-energy analyses.
+The quantitative results documented in this README are based on the verified **1 ns production trajectories**. No claim is made here that the supplementary 1-to-10 ns continuation was executed, nor are any 10 ns results used in the current Pipeline 3 conclusions.
 
 ---
 
@@ -441,29 +419,27 @@ CF05 is therefore useful as evidence that the empirical pair score is interpreti
 
 Pipeline 3 deliberately avoids selecting a final peptide from one metric alone.
 
-The evidence can be summarized as:
+The principal method-specific observations are:
 
 ```text
-Method / evidence          F0010      CF06       CF02       CF05
------------------------------------------------------------------
-Natural reference            ✓
-CLEAR-derived                           ✓          ✓          ✓
-Pair score lead                                              best
-Rosetta validation                     best
-1 ns MD dynamic rank          3          2          1          4
-Persistent contacts           43         45         43         43
-Endpoint rank                 2          1          3          4
+Evidence / metric                       F0010       CF06       CF02
+--------------------------------------------------------------------
+Reference peptide                         ✓
+Counterfactual candidate                              ✓          ✓
+Mean peptide RMSD (Å)                   1.966       1.293      0.901
+Mean peptide RMSF (Å)                   1.164       0.904      0.737
+Persistent contacts                       43          45         43
+Mean contact persistence                0.541       0.529      0.603
+Endpoint proxy (kcal/mol)             -59.46      -65.66     -56.62
 ```
 
-The main conclusion is therefore one of **cross-method complementarity rather than forced consensus**.
+Thus, within the current protocols:
 
-`CF06` is the strongest integrated energetic/structural lead because it is supported by Rosetta and has the most favourable endpoint-energy estimate.
+- CF02 shows the strongest short-timescale dynamic-stability metrics;
+- CF06 has the largest number of persistent contacts and the most favourable 07e endpoint-energy proxy;
+- F0010 provides the EGF-derived reference peptide against which the counterfactual candidates are compared.
 
-`CF02` is the strongest dynamic-stability lead because it has the lowest RMSD and RMSF in the 1 ns comparison.
-
-`CF05` remains informative because it was the pair-score lead, but its 1 ns MD and endpoint results do not confirm it as the strongest physical candidate under the current protocol.
-
-The results therefore support carrying `CF06` and `CF02` forward as the two main computational reference leads, while retaining `CF05` as an example of why local empirical scoring should be validated by independent structural and physical methods.
+These observations are complementary computational criteria and should not be interpreted as experimental proof that one peptide has higher biological affinity, inhibitory activity or efficacy.
 
 ---
 
@@ -494,7 +470,8 @@ MDAnalysis is used for trajectory analysis, including:
 - RMSF;
 - atom selections;
 - distance-based contact analysis;
-- contact persistence.
+- contact persistence;
+- PBC/continuity diagnostics.
 
 ---
 
@@ -526,17 +503,7 @@ The notebooks were developed using the Jupyter kernel:
 Python (PEARL MD)
 ```
 
-Typical Python dependencies include:
-
-- Python 3.11;
-- OpenMM;
-- PDBFixer;
-- MDAnalysis;
-- NumPy;
-- pandas;
-- Matplotlib;
-- pathlib;
-- standard Python scientific utilities.
+Typical Python dependencies include Python 3.11, OpenMM, PDBFixer, MDAnalysis, NumPy, pandas, Matplotlib, pathlib and standard Python scientific utilities.
 
 ---
 
@@ -555,12 +522,9 @@ Depending on the notebook and run mode, Pipeline 3 may generate:
 - receptor–partner contact tables;
 - contact-persistence matrices;
 - persistent-contact subsets;
-- hotspot/MD integration tables;
+- FoldX-derived/MD integration tables;
 - comparative peptide MD summaries;
-- endpoint-energy snapshot tables;
-- endpoint-energy summary tables;
-- conformational-cluster tables and representative medoid PDB structures (`07f`);
-- integrated CLEAR/pair/FoldX/Rosetta/MD/endpoint comparison tables;
+- endpoint-energy snapshot and summary tables;
 - diagnostic plots;
 - Markdown reports;
 - CSV result files.
@@ -587,61 +551,37 @@ Typical logic:
 FAST_TEST_MODE = True
 ```
 
-is used first to verify that:
+is used first to verify that system preparation, OpenMM context creation, trajectory generation and downstream analysis work correctly.
 
-- system preparation succeeds;
-- OpenMM can create a simulation context;
-- trajectories are generated;
-- analysis code completes;
-- no obvious structural failure occurs.
-
-The final comparative analyses should then be rerun with:
+Final comparative results are generated with the corresponding production configuration, for example:
 
 ```python
 FAST_TEST_MODE = False
 ```
 
-to generate the full 1 ns production trajectories and associated analysis.
-
 Smoke-test results must not be interpreted as final scientific results.
+
+**Do not rerun production MD merely to regenerate documentation or reports when the verified production trajectories and saved analysis outputs already exist.**
 
 ---
 
 ## Interpretation and limitations
 
-Pipeline 3 provides a stronger physical validation layer than static scoring alone, but several limitations remain.
-
 ### Short production trajectories
 
-The current production simulations are 1 ns prototypes.
-
-They are useful for:
-
-- detecting rapid structural instability;
-- comparing short-timescale peptide flexibility;
-- measuring contact persistence;
-- prioritizing candidates.
-
-They are not sufficient to demonstrate full conformational convergence.
+The current production simulations are 1 ns prototypes. They are useful for detecting rapid structural instability, comparing short-timescale peptide flexibility, measuring contact persistence and prioritizing candidates, but they are not sufficient to demonstrate full conformational convergence.
 
 More rigorous studies would require longer trajectories and preferably independent replicas.
 
-### Force-field dependence
+### Force-field and protocol dependence
 
-MD results depend on:
+MD and endpoint results depend on force-field choice, solvent model, protonation states, ion placement, starting structures, equilibration protocol, atom selections and sampling strategy.
 
-- force-field choice;
-- solvent model;
-- protonation states;
-- ion placement;
-- starting structures;
-- equilibration protocol.
-
-The reported ranking is therefore protocol-dependent.
+Reported computational orderings are therefore protocol-dependent.
 
 ### Endpoint energy is not absolute binding free energy
 
-The `07e`/`07f` endpoint calculation is deliberately described as:
+The `07e` calculation is deliberately described as:
 
 ```text
 MM/GBSA-like single-trajectory endpoint energy
@@ -649,30 +589,15 @@ MM/GBSA-like single-trajectory endpoint energy
 
 rather than a rigorous binding free energy.
 
-It does not include:
+It does not include configurational entropy, fully independent receptor and peptide relaxation, multiple independent MD replicas, long-timescale convergence, alchemical free-energy transformations or experimental calibration.
 
-- configurational entropy;
-- fully independent receptor and peptide relaxation;
-- multiple independent MD replicas;
-- long-timescale convergence;
-- alchemical free-energy transformations;
-- experimental calibration.
+The 50 endpoint snapshots per candidate are correlated frames from one trajectory, not independent replicates.
 
-The endpoint values should therefore be used for **relative computational prioritization**, not interpreted directly as experimental `ΔG`, `Kd`, `Ki` or `IC50`.
+The endpoint values should therefore be used for **relative computational comparison within the same protocol**, not interpreted directly as experimental `ΔG`, `Kd`, `Ki` or `IC50`.
 
 ### Computational convergence is not biological validation
 
-Agreement between:
-
-```text
-FoldX
-Rosetta
-MD
-contact persistence
-endpoint energy
-```
-
-strengthens a computational hypothesis but does not establish biological activity.
+Agreement between FoldX-derived criteria, Rosetta, MD, contact persistence and endpoint-energy calculations can strengthen a computational hypothesis, but it does not establish biological activity.
 
 Experimental peptide-binding and inhibition studies would be required for biological validation.
 
@@ -680,21 +605,19 @@ Experimental peptide-binding and inhibition studies would be required for biolog
 
 ## Main Pipeline 3 conclusion
 
-Pipeline 3 successfully adds a dynamic and energetic validation layer to the PEARL peptide-design workflow.
+Pipeline 3 adds a dynamic and energetic computational assessment layer to the PEARL peptide-design workflow.
 
-The principal findings are:
+The principal verified findings are:
 
-1. the extracellular EGF–EGFR B–D interface retains a substantial persistent-contact network during the 1 ns production MD;
-2. all 11 F0010 positions remain represented in the MD-persistent interface;
-3. six F0010 positions are supported simultaneously by FoldX hotspot analysis and MD persistence;
-4. among the original `07d` candidates, `CF02` and `CF06` are dynamically more rigid than the natural F0010 reference;
-5. the `07f` production follow-up shows that the pair-score lead `CF05` is more conformationally mobile over 1 ns and ranks fourth in the four-candidate MD comparison;
-6. `CF02` shows the strongest overall MD stability metrics;
-7. `CF06` shows the most favourable MM/GBSA-like endpoint-energy estimate and remains the strongest energetic lead;
-8. the final method-specific picture is `pair score → CF05`, `Rosetta → CF06`, `1 ns MD → CF02`, `endpoint → CF06`;
-9. the disagreement across methods is scientifically informative and supports layered validation rather than selection by a single score.
+1. the extracellular EGF–EGFR B–D interface retains a substantial persistent-contact network during the 1 ns production MD, with 78 contacts persistent in at least 50% of frames;
+2. 10 of the 11 positions in the D38–48 F0010 source region are represented in MD-persistent interface contacts while that region remains part of full EGF;
+3. six positions — G39, R41, Q43, Y44, R45 and L47 — have both historical FoldX-derived design-anchor support and MD-persistent interface support;
+4. direct 1 ns MD of the extracted peptide complexes shows the strongest short-timescale dynamic-stability metrics for CF02, whereas CF06 maintains the largest number of persistent contacts;
+5. the 07e single-trajectory GBn2 endpoint proxy is most favourable for CF06 among F0010, CF06 and CF02;
+6. PBC/continuity diagnostics passed for the full EGF–EGFR production trajectory and for all three direct peptide-comparison trajectories, so no trajectory reconstruction was required;
+7. differences among structural, dynamic and energetic criteria are treated as complementary computational evidence rather than forced into a single universal score.
 
-Pipeline 3 therefore supports the PEARL strategy of **layered candidate validation**:
+Pipeline 3 therefore supports the PEARL strategy of layered candidate assessment:
 
 ```text
 sequence design
