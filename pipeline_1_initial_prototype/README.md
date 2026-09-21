@@ -14,9 +14,11 @@ Pipeline 1 should be interpreted as the initial end-to-end implementation of the
         ↓
     chain and interface analysis
         ↓
-    biological and structural interface validation
+    structural and biological-context interface assessment
         ↓
-    FoldX alanine scanning and hotspot identification
+    FoldX BuildModel mutation-energy sensitivity analysis
+        ↓
+    FoldX AnalyseComplex interaction-energy sensitivity assessment
         ↓
     contiguous seed-peptide extraction
         ↓
@@ -31,11 +33,12 @@ Pipeline 1 should be interpreted as the initial end-to-end implementation of the
 - **Target:** Epidermal Growth Factor Receptor, EGFR
 - **Reference structure:** PDB `3NJP`
 - **Initial interface selected:** chains `B–D`
+- **Chain identity:** chain `B` = extracellular EGFR; chain `D` = EGF
 - **Initial heavy-atom contact cutoff:** 4.5 Å
 - **Reference peptide source:** a contiguous region extracted from the selected protein–protein interface
 - **Main output:** a ranked collection of peptide candidates derived from an interface seed sequence
 
-The `B–D` interface was initially selected by comparing the number of inter-chain structural contacts. This choice was subsequently examined in the biological-interface validation notebook.
+The `B–D` interface was initially selected by comparing the number of inter-chain structural contacts. This choice was subsequently examined through structural and biological-context assessment. The analysis does not by itself experimentally validate the interface.
 
 The analyses contained in this directory are computational and do not constitute experimental evidence of peptide binding, inhibition or biological activity.
 
@@ -46,6 +49,7 @@ The analyses contained in this directory are computational and do not constitute
 - `01_EGFR_PDB_to_Interface_Graph.ipynb`
 - `01B_Biological_Interface_Validation.ipynb`
 - `02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED.ipynb`
+- `02c_FoldX_Binding_Hotspot_Validation.ipynb`
 - `03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb`
 - `04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb`
 
@@ -60,6 +64,8 @@ Notebook `01B` is an autonomous validation step placed between Notebook `01` and
     01B_Biological_Interface_Validation
         ↓
     02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED
+        ↓
+    02c_FoldX_Binding_Hotspot_Validation
         ↓
     03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED
         ↓
@@ -92,7 +98,7 @@ The number of structural contacts is used as an initial geometric criterion. It 
 
 ## `01B_Biological_Interface_Validation.ipynb`
 
-This notebook provides an additional biological and structural validation step for the interface selected in Notebook `01`.
+This notebook provides an additional structural and biological-context assessment of the interface selected in Notebook `01`.
 
 Its purpose is to determine whether the interface selected from structural contact analysis is also compatible with:
 
@@ -102,7 +108,7 @@ Its purpose is to determine whether the interface selected from structural conta
 - structural annotations associated with the PDB entry;
 - the biological plausibility of the selected chain pair.
 
-This notebook should be interpreted as a validation and interpretation stage rather than as an independent peptide-design procedure.
+This notebook should be interpreted as a structural/contextual assessment and interpretation stage rather than as experimental biological validation or an independent peptide-design procedure.
 
 Its role is to reduce the risk of carrying an interface forward solely because it contains the largest number of geometric contacts.
 
@@ -110,32 +116,44 @@ Its role is to reduce the risk of carrying an interface forward solely because i
 
 ## `02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED.ipynb`
 
-This notebook estimates the energetic contribution of interface residues through computational alanine scanning using FoldX.
+This notebook performs FoldX `BuildModel` alanine-mutation calculations and uses the resulting mutation-energy changes as an operational sensitivity measure for peptide design.
 
 Main operations include:
 
-- preparation of the selected interface structure;
-- definition of interface residues to be scanned;
-- mutation of selected residues to alanine;
-- generation of FoldX `BuildModel` inputs;
-- execution or preparation of FoldX calculations;
-- parsing of mutation-induced energy differences;
-- identification of candidate energetic hotspots;
-- integration of FoldX, contact and graph-based information;
-- construction of ranked interface-residue tables;
-- identification of contiguous regions enriched in important residues.
+- preparation of the selected B–D interface structure;
+- definition of chain-D residues to be scanned;
+- mutation of selected residues to alanine with FoldX `BuildModel`;
+- parsing of mutation-induced total-energy changes;
+- application of the historical operational threshold `> 1.5 kcal/mol`;
+- integration of BuildModel sensitivity, contact and graph-based information;
+- construction of ranked interface-residue and contiguous-window tables.
 
-A residue is considered a candidate energetic hotspot when its mutation to alanine is predicted to destabilize the interface by a sufficiently large amount.
+The historical `> 1.5 kcal/mol` classification is retained as a **BuildModel-derived energetic design criterion**. It must not be interpreted as a direct binding ΔΔG measurement, an experimental hotspot classification, or proof that a residue contributes a specific amount to EGF–EGFR binding affinity.
 
-In this prototype, a positive mutation-induced energy change indicates that the native residue is predicted to contribute favourably to interface stability.
+In the historical 02b ranking, the first 30-residue window was D:21–50 and D:22–51 was second.
 
-FoldX values are computational estimates and should not be interpreted as experimental binding free energies.
+---
+
+## `02c_FoldX_Binding_Hotspot_Validation.ipynb`
+
+This notebook adds an interaction-specific FoldX assessment of the extracellular EGF–EGFR B–D interface using `AnalyseComplex`. Chain `B` is extracellular EGFR and chain `D` is EGF.
+
+The repaired wild-type B–D complex has a FoldX interaction energy of `-36.5948`. For each selected chain-D residue, alanine-mutant complexes generated with `BuildModel` are evaluated with `AnalyseComplex`, and the mutant interaction energy is compared with the wild-type value.
+
+The resulting quantity is described as **FoldX interaction-energy sensitivity to alanine mutation**. It is a computational sensitivity measure and not an experimentally measured binding free-energy change.
+
+The associated A07 analysis reassessed the historical contiguous-window selection. For the two leading 30-residue windows, cumulative signed interaction-energy sensitivity was:
+
+- D:22–51: `22.66614`;
+- D:21–50: `22.51558`.
+
+The difference is `+0.15056`, corresponding to the replacement of M21 by E51 in the two windows. Both windows contained 21 tested residues. D:22–51 was therefore adopted as the updated downstream seed. The difference is small, and D:22–51 should not be interpreted as optimal under every possible ranking or normalization criterion.
 
 ---
 
 ## `03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb`
 
-This notebook searches the selected interface chain for contiguous peptide windows that retain important interface residues and energetic hotspots.
+This notebook uses the updated A07 seed selection and generates local peptide variants while retaining important interface positions and BuildModel-derived energetic design anchors.
 
 Main operations include:
 
@@ -150,7 +168,7 @@ Main operations include:
 - sequence-level and pre-docking scoring;
 - export of the seed and generated candidates.
 
-The initial prototype selected a 30-residue seed peptide from chain `D`:
+The historical 02b ranking placed D:21–50 first. After the interaction-specific 02c/A07 reassessment, the updated operational seed is the 30-residue chain-D window D:22–51:
 
     YIEALDKYACNCVVGYIGERCQYRDLKWWE
 
@@ -172,13 +190,13 @@ Main operations include:
 - candidate deduplication;
 - comparison with the original seed;
 - conservation of important interface positions;
-- hotspot-retention analysis;
+- retention analysis for BuildModel-derived energetic design anchors;
 - physicochemical filtering;
 - calculation of composite pre-docking scores;
 - prioritization of candidates for downstream structural evaluation;
 - export of ranked candidate tables.
 
-The output is a reduced and ranked set of peptide candidates intended for subsequent structure-based evaluation using tools such as FoldX and Rosetta FlexPepDock.
+The updated output contains the D:22–51 seed plus 10 selected non-seed candidates intended for subsequent structure-based evaluation. The principal downstream files are `outputs/top_diffusion_energetic_peptides_summary.csv` and `outputs/top_diffusion_energetic_peptides_pre_docking.fasta`.
 
 A favourable pre-docking score does not demonstrate binding. It only identifies candidates that satisfy the selected computational criteria better than others within the generated set.
 
@@ -201,7 +219,7 @@ The notebooks use scientific Python and structural-bioinformatics libraries, inc
 
 ### FoldX
 
-FoldX is used for computational alanine scanning and mutation-energy estimation.
+FoldX is used both for `BuildModel` mutation-energy sensitivity calculations and for the interaction-specific `AnalyseComplex` assessment.
 
 FoldX must be installed separately and its executable path may need to be configured manually according to the local operating system.
 
@@ -225,7 +243,8 @@ Depending on the local execution environment, Pipeline 1 may generate:
 - residue-level interface graphs;
 - graph-centrality statistics;
 - FoldX mutation-energy results;
-- energetic-hotspot tables;
+- BuildModel mutation-energy sensitivity and design-anchor tables;
+- AnalyseComplex interaction-energy sensitivity results;
 - ranked contiguous peptide windows;
 - the selected seed peptide;
 - generated local peptide variants;
@@ -249,7 +268,7 @@ The workflow provides a reproducible strategy for prioritizing:
 
 - candidate protein–protein interfaces;
 - structurally central residues;
-- energetic hotspots;
+- BuildModel-derived energetic design anchors and interaction-energy-sensitive residues;
 - contiguous interface-derived peptide windows;
 - local peptide variants;
 - candidates for later structure-based evaluation.
@@ -257,17 +276,18 @@ The workflow provides a reproducible strategy for prioritizing:
 The following limitations should be considered:
 
 - contact count alone does not establish biological relevance;
-- biological-interface validation remains dependent on available structural annotations;
+- structural and biological-context assessment remains dependent on available structural annotations and does not constitute experimental interface validation;
 - graph centrality is a structural prioritization criterion, not direct experimental evidence;
 - FoldX energies are approximate computational estimates;
-- alanine-scanning predictions are not experimental measurements;
+- BuildModel mutation-energy changes are not direct binding ΔΔG values;
+- AnalyseComplex interaction-energy sensitivities are computational and not experimental measurements;
 - a selected seed peptide is a design hypothesis;
 - generated peptide variants are not confirmed binders;
 - pre-docking scores do not demonstrate binding affinity;
 - peptide stability, solubility, selectivity and cellular activity are not established;
 - additional docking, molecular-dynamics and experimental validation are required.
 
-The final candidates should therefore be interpreted as ranked computational hypotheses rather than confirmed EGFR inhibitors.
+The final candidates should therefore be interpreted as ranked computational peptide hypotheses for subsequent structure-based evaluation. The workflow does not establish EGF competition, EGFR inhibition, binding affinity, biological response or therapeutic efficacy.
 
 ---
 
@@ -297,6 +317,7 @@ Pipeline 1 should remain independently understandable and reproducible as the in
     ├── 01_EGFR_PDB_to_Interface_Graph.ipynb
     ├── 01B_Biological_Interface_Validation.ipynb
     ├── 02b_Interface_Hotspot_AlanineScanning_FoldX_BuildModel_FIXED.ipynb
+    ├── 02c_FoldX_Binding_Hotspot_Validation.ipynb
     ├── 03b_Contiguous_Peptide_Window_Diffusion_EnergeticHotspots_FIXED.ipynb
     └── 04b_Candidate_Validation_PreDocking_EnergeticHotspots.ipynb
 
@@ -305,6 +326,6 @@ Pipeline 1 should remain independently understandable and reproducible as the in
 ## Project status
 
 - **Stage:** initial PEARL computational prototype
-- **Scope:** interface identification, hotspot analysis, seed extraction, variant generation and pre-docking prioritization
+- **Scope:** extracellular EGF–EGFR interface identification, structural/contextual assessment, FoldX mutation- and interaction-energy sensitivity analysis, seed extraction, variant generation and pre-docking prioritization
 - **Validation level:** computational and non-experimental
 - **Purpose:** methodological development, research and academic presentation
