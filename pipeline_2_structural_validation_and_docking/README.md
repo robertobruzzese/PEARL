@@ -17,21 +17,25 @@ The initial PEARL prototype is stored in `pipeline_1_initial_prototype/`.
 
 Pipeline 1 provides the first implementation of the workflow:
 
-    EGFR structure
+    PDB 3NJP extracellular EGF–EGFR complex
         ↓
-    interface identification
+    B–D interface identification
         ↓
-    biological-interface validation
+    structural/interface-context assessment
         ↓
-    FoldX alanine scanning
+    FoldX BuildModel alanine-mutation sensitivity
         ↓
-    energetic-hotspot identification
+    FoldX AnalyseComplex interaction-energy sensitivity refinement
         ↓
-    seed-peptide extraction
+    updated seed-peptide selection
         ↓
     candidate generation
         ↓
     pre-docking prioritization
+
+In the implemented workflow, chain B corresponds to extracellular EGFR and chain D to EGF. The original FoldX `BuildModel` alanine scan was used as a mutation-energy sensitivity and design-prioritization signal, not as experimental hotspot evidence or as a direct measurement of binding affinity.
+
+The subsequent `AnalyseComplex` assessment provided a more interaction-focused computational refinement. This analysis supported the adoption of EGF D:22–51 as the updated Pipeline 1 seed. Pipeline 2 retains some historical design anchors and intermediate choices for reproducibility; these should not be interpreted as experimentally validated hotspots.
 
 Pipeline 2 starts from selected structural and sequence information obtained during the first stage and extends the project through two complementary computational branches.
 
@@ -63,13 +67,19 @@ Pipeline 2 starts from selected structural and sequence information obtained dur
 
 ## Biological system
 
-- **Target:** Epidermal Growth Factor Receptor, EGFR
+- **Target system:** extracellular EGF–EGFR interaction
 - **Reference structure:** PDB `3NJP`
-- **Initial interface studied:** chains `B–D`
-- **Reference peptide source:** contiguous regions extracted from the selected protein–protein interface
-- **Main objective:** identify and structurally prioritize peptide candidates capable of retaining important interface interactions
+- **Receptor chain:** chain `B` — extracellular EGFR
+- **Ligand/protein partner:** chain `D` — EGF
+- **Interface studied:** chains `B–D`
+- **Updated Pipeline 1 seed:** EGF D:22–51
+- **Pipeline 2 local CLEAR seed:** F0010 — `IGERCQYRDLK` — EGF D:38–48
+- **Reference peptide source:** contiguous regions extracted from the EGF side of the selected EGF–EGFR interface
+- **Main objective:** generate and computationally prioritize peptide candidates that retain relevant structural features of the EGF–EGFR interface
 
-The analyses contained in this directory are computational and do not constitute experimental evidence of peptide binding, inhibition or biological activity.
+F0010 is a natural sequence fragment extracted from EGF and computationally prioritized in the short-peptide branch. It is not an experimentally validated isolated EGFR-binding peptide.
+
+The analyses contained in this directory are computational and do not constitute experimental evidence of peptide binding, inhibition, modulation or biological activity.
 
 ---
 
@@ -101,14 +111,14 @@ Prefixes such as `02c`, `03d`, `04e` and `05d` reflect the chronological and exp
 
 ## `02c_Hotspot_Centered_Peptide_Library.ipynb`
 
-This notebook constructs a library of short peptide sequences centred around important interface hotspots.
+This notebook constructs a library of short peptide sequences centred around interface positions historically prioritized using the Pipeline 1 structural and FoldX BuildModel analyses. In the original workflow these positions were referred to as hotspots; in the corrected interpretation they are treated as computational design anchors rather than experimentally validated binding hotspots.
 
 Main operations include:
 
 - selection of structurally or energetically important interface residues;
 - definition of peptide windows around hotspot positions;
 - generation of peptides with different lengths and boundaries;
-- annotation of hotspot coverage;
+- annotation of historical FoldX-derived design-anchor coverage;
 - comparison with the original interface-derived peptide;
 - creation of a candidate library for subsequent ranking.
 
@@ -204,7 +214,7 @@ This workflow is inspired by the general logic of CLEAR, but it is not identical
 
 This notebook trains a predictive peptide oracle using the local peptide-variant dataset.
 
-The oracle is intended to approximate a structural or energetic target associated with the generated peptide variants.
+The oracle is trained to approximate the local computational composite target constructed in Notebook `04c`. This target combines FoldX-derived information with structural descriptors, including native-contact retention, historical design-anchor preservation and clash-related information.
 
 Main operations include:
 
@@ -219,6 +229,8 @@ Main operations include:
 - assessment of whether the oracle is sufficiently reliable for optimization.
 
 The oracle is a computational surrogate model. Its predictions depend on the quality, size and coverage of the underlying dataset.
+
+Its predictive performance therefore measures primarily how well the model reproduces this local computational target. It should not be interpreted as a direct predictor of experimental peptide–EGFR affinity or biological activity.
 
 ---
 
@@ -259,18 +271,18 @@ Main operations include:
 - constructing receptor–counterfactual complexes;
 - checking structural integrity;
 - preparing FoldX calculations;
-- evaluating receptor–peptide interaction energies;
+- evaluating FoldX `BuildModel` mutation-energy changes for the counterfactual variants;
 - comparing counterfactuals with the original reference peptide;
 - rejecting structurally invalid or energetically unfavourable candidates;
 - prioritizing candidates for Rosetta refinement.
 
-This notebook represents the first structure-based validation stage after oracle-guided optimization.
+This notebook provides an explicit FoldX and structural assessment after oracle-guided optimization. Because FoldX-derived information already contributes to the composite target used to train the oracle, this step should be interpreted primarily as a direct computational consistency check, not as a fully independent validation of the oracle. Subsequent Rosetta/FlexPepDock refinement introduces different modelling assumptions.
 
 ---
 
 ## `05d_CLEAR_Counterfactual_FlexPepDock_Refinement.ipynb`
 
-This notebook performs Rosetta FlexPepDock refinement of the CLEAR counterfactual candidates that passed the previous structural and FoldX validation stage.
+This notebook performs Rosetta FlexPepDock refinement of the CLEAR counterfactual candidates prioritized by the preceding FoldX and structural assessment.
 
 Main operations include:
 
@@ -283,7 +295,7 @@ Main operations include:
 - inspection of final peptide poses;
 - prioritization of structurally plausible counterfactual candidates.
 
-This stage provides a more computationally expensive validation layer and should normally be performed after Notebook `05c`.
+This stage provides an additional computational assessment based on a different energy model and structural-refinement procedure and should normally be performed after Notebook `05c`.
 
 ---
 
@@ -311,6 +323,8 @@ Main operations include:
 The notebook supports interpretation of why specific substitutions are preferred by the local surrogate model. For example, a single mutation may alter two adjacent pairs simultaneously and therefore accumulate multiple local contributions.
 
 The resulting value is an **empirical, position-specific surrogate energetic cost**. It is not an absolute physical energy in kcal/mol and does not replace FoldX, Rosetta or experimental validation.
+
+Because the pair score is derived from the same local 04c composite target used by the CLEAR/oracle workflow, it should not be counted as an independent line of biological or energetic evidence. Its primary role is interpretative: it helps identify which adjacent residue pairs contribute to the behaviour of the local computational target.
 
 ---
 
@@ -474,7 +488,7 @@ The following limitations should be considered:
 - molecular-dynamics analysis may be required for further validation;
 - experimental validation is ultimately required.
 
-The final candidates should therefore be interpreted as ranked structural hypotheses rather than confirmed inhibitors.
+The final candidates should therefore be interpreted as prioritized computational structural hypotheses rather than experimentally confirmed EGFR binders, modulators or inhibitors.
 
 ---
 
