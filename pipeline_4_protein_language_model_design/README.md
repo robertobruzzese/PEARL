@@ -38,7 +38,7 @@ All results are computational. They do not constitute experimental evidence of b
 
 ## Relationship with Pipelines 2 and 3
 
-Pipeline 2 produced the natural short reference and selected CLEAR-derived counterfactual candidates:
+Pipeline 2 produced the 11-residue EGF-derived reference peptide and selected CLEAR-derived counterfactual candidates:
 
 ```text
 F0010 = IGERCQYRDLK
@@ -49,12 +49,12 @@ CF02  = IGERSQYRELK
 Pipeline 3 subjected these candidates to explicit-solvent MD and comparative endpoint-energy analysis. Their complementary reference roles are retained throughout Pipeline 4:
 
 ```text
-F0010  natural / miniaturised reference
+F0010  11-residue reference peptide extracted from native EGF
 CF02   strongest Pipeline-3 dynamic-stability reference
 CF06   strongest Pipeline-3 structural / endpoint-energy reference
 ```
 
-Pipeline 4 adds an independent AI design branch while preserving the central PEARL principle that no single score is treated as a universal measure of peptide quality.
+Pipeline 4 adds an complementary AI design branch while preserving the central PEARL principle that no single score is treated as a universal measure of peptide quality.
 
 ---
 
@@ -65,7 +65,7 @@ Pipeline 4 adds an independent AI design branch while preserving the central PEA
 - **Interface:** chains `B–D`
 - **Receptor chain:** `B`
 - **Peptide chain:** `D`
-- **Natural short reference:** `F0010 = IGERCQYRDLK`
+- **11-residue EGF-derived reference peptide:** `F0010 = IGERCQYRDLK`
 - **CLEAR references:** `CF06` and `CF02`
 
 ProteinMPNN redesigns peptide chain `D` while receptor chain `B` remains fixed. Six peptide positions supported by previous FoldX and MD hotspot analyses are protected; the remaining positions are designable.
@@ -86,6 +86,8 @@ ProteinMPNN redesigns peptide chain `D` while receptor chain `B` remains fixed. 
 10. `08j_Final_Multi_Objective_Ranking.ipynb`
 
 Notebooks `08a–08d` primarily use the PEARL AI environment. Notebooks `08e–08f` use the molecular-dynamics environment. Notebooks `08g–08j` integrate external structure predictions and the validated tables produced by the preceding stages.
+
+**Canonical-version note.** The final repository should publish the audited production generations of 08g–08j. In particular, the canonical 08h/08i/08j correspond to the later full-cohort/evidence-tier generations; earlier proxy-only, readiness-only and two-candidate copies are retained only as version history and must not be used to describe the final Pipeline-4 state.
 
 ---
 
@@ -190,8 +192,8 @@ Among the two AI-derived candidates, the short-timescale dynamic comparison favo
 | **1** | **CF06** | **−65.66** | 6.80 |
 | 2 | F0010 | −59.46 | 5.96 |
 | 3 | CF02 | −56.62 | 4.63 |
-| **4** | **MPNN_NEW_05** | **−53.67** | 6.43 |
-| 5 | MPNN_NEW_01 | −46.41 | 4.66 |
+| **4** | **MPNN_NEW_05** | **−55.57** | 5.61 |
+| 5 | MPNN_NEW_01 | −53.43 | 4.41 |
 
 `MPNN_NEW_05` is the endpoint-energy-favoured AI-derived candidate. The endpoint quantity is comparative and must not be interpreted as absolute binding free energy.
 
@@ -208,81 +210,66 @@ Both sequence and structural-file QC passed. Within this comparison, `MPNN_NEW_0
 
 ## 08h — Solubility and developability screening
 
-`08h` computes sequence-derived physicochemical descriptors with explicit provenance and supports validated import of authentic CamSol output. It never reports CamSol values unless a real run, version, mode and sequence-matched manifest are supplied.
+The canonical `08h` full-cohort run evaluates **27 sequences**: F0010, CF02, CF06 and the 24 unique ProteinMPNN designs. It computes sequence-derived physicochemical descriptors and imports an authentic **CamSol intrinsic** run with explicit provenance, sequence hashes and cohort validation.
 
-The executed run was proxy-only:
-
-| Candidate | GRAVY | Charge at pH 7 | Theoretical pI | CamSol |
-|---|---:|---:|---:|---|
-| **MPNN_NEW_01** | **−1.94** | +0.40 | 8.41 | not executed |
-| MPNN_NEW_05 | −1.44 | +0.85 | 8.75 | not executed |
-
-Both candidates had no heuristic alerts. `MPNN_NEW_01` is more hydrophilic according to the GRAVY proxy. These values are not experimental solubility measurements. The downstream metric contract therefore records:
+CamSol is used here as a **computational solubility prediction**, not as an experimental solubility measurement. The imported run passed the notebook provenance and cohort-consistency checks:
 
 ```text
-developability_metric_used   = proxy_gravy
-developability_metric_source = sequence-derived Biopython GRAVY proxy
-CamSol status                = not_executed
+CamSol status = executed_imported_and_validated
 ```
 
-## 08i — Evidence integration and Bayesian-optimisation readiness
-
-`08i` validates candidate identity and sequence hashes across 08f, 08g and 08h. It converts each domain into a direction-aware within-cohort utility:
+The downstream developability contract therefore uses:
 
 ```text
-energy_utility_z
-structural_utility_z
-developability_utility_z
+developability_metric_used   = camsol_overall_score
+developability_metric_source = CamSol computational prediction
 ```
 
-Structural pLDDT and RMSD are first combined into a single structural-domain signal so that structure is not double-weighted. With equal domain weights:
+Representative validated CamSol overall scores include F0010 = 2.0515, CF02 = 2.2462 and CF06 = 2.0956. The 24-design ProteinMPNN cohort is retained for downstream full-cohort screening and Bayesian decision support.
 
-| Rank | Candidate | Composite proxy |
-|---:|---|---:|
-| **1** | **MPNN_NEW_01** | **0.333** |
-| 2 | MPNN_NEW_05 | −0.333 |
+## 08i — Bayesian optimisation on the full ProteinMPNN cohort
 
-Because only two candidates are available, the z-scores primarily encode ordering rather than reliable effect magnitude.
+The canonical full-cohort `08i` uses the **24 unique ProteinMPNN designs** as a discrete design pool. Five candidates already possess real structural evaluations from 08d and are used as the observed training set; the remaining **19 candidates are unobserved** at this expensive structural level.
 
-The weight-sensitivity scenarios produced:
+The model inputs are three complementary cohort-wide computational predictors:
 
 ```text
-equal domains            → MPNN_NEW_01
-structure priority       → MPNN_NEW_01
-developability priority  → MPNN_NEW_01
-energy priority          → tie for first
+ProteinMPNN favourability
+ESM-2 PLL
+CamSol overall score
 ```
 
-Bayesian optimisation was not executed:
+They are not assumed to be statistically or experimentally independent. The supervised decision-support target is constructed from the five observed FoldX/Rosetta structural evaluations. It is **not binding affinity or free energy**.
+
+A BoTorch `SingleTaskGP` is fitted to the five observed candidates, and `LogExpectedImprovement` is evaluated directly over every unobserved member of the discrete pool. Continuous sequence-space optimisation is intentionally avoided.
+
+The saved run proposes:
 
 ```text
-ENABLE_BOTORCH = False
-BoTorch available = False
-observations = 2
-minimum workflow safeguard = 8
-unevaluated candidate pool = absent
+MPNN_POOL_023 = VGARNQYRDLN
+status: proposed_for_next_08d_structural_validation
 ```
 
-No Gaussian process, acquisition function, posterior or new sequence was fabricated.
+This sequence already belongs to the ProteinMPNN pool. It is **not a newly generated peptide, a validated lead or an affinity prediction**; it is the next candidate suggested for an expensive structural evaluation. The run records 24 pool members, 5 observations and 19 unobserved candidates, with all corresponding QC checks passing.
 
-## 08j — Final multi-objective decision support
+## 08j — Final multi-objective decision support with evidence tiers
 
-`08j` consumes the validated 08i evidence contract, applies configurable equal domain weights, evaluates Pareto optimality and distinguishes outright victories from ties.
+The canonical `08j` uses an **evidence-tier** architecture so that candidates are compared only with information available at the corresponding level of evaluation.
 
-| Candidate | Final rank | Composite | Outright wins | Ties for first | Losses | Pareto-optimal |
-|---|---:|---:|---:|---:|---:|---|
-| **MPNN_NEW_01** | **1** | **0.333** | **3** | 1 | 0 | yes |
-| MPNN_NEW_05 | 2 | −0.333 | 0 | 1 | 3 | yes |
+**Tier 1 — Full 24-design screening.** All 24 ProteinMPNN designs are compared using cohort-wide ProteinMPNN, ESM-2 and validated CamSol computational signals.
 
-The final evidence-aware interpretation is:
+**Tier 2 — Five structurally validated candidates.** The five candidates evaluated in 08d are compared using the available static structural evidence together with the AI and CamSol information.
+
+**Tier 3 — Two fully evaluated new candidate peptides.** `MPNN_NEW_01` and `MPNN_NEW_05` are the two new candidates with the complete computational evidence set used at this stage: static structure, short MD, endpoint energy, ESMFold structural descriptors and CamSol prediction.
+
+The Tier-3 criteria are complementary computational signals and are not assumed to constitute statistically or experimentally independent evidence. With only two candidates, standardized components encode directional contrasts rather than calibrated effect sizes. The saved Tier-3 decision-support score is:
 
 ```text
-MPNN_NEW_01 = best equal-weight exploratory balance
-MPNN_NEW_05 = endpoint-energy-favoured alternative
-both candidates = Pareto-optimal
+MPNN_NEW_01   tier3_score =  0.2
+MPNN_NEW_05   tier3_score = -0.2
 ```
 
-Neither candidate dominates the other in every included domain. Pareto optimality does not establish universal biological superiority.
+This score is a transparent multi-objective prioritisation aid, **not a validated therapeutic ranking, affinity estimate or biological superiority claim**. The endpoint-energy comparison itself favours `MPNN_NEW_05`, illustrating why the individual evidence domains must remain visible.
 
 ---
 
@@ -405,7 +392,7 @@ The reference trajectories are not rerun. Their official Pipeline-3 summaries ar
 
 ## Detailed 08f endpoint workflow
 
-Fifty snapshots are selected uniformly from each 1 ns production trajectory. For every snapshot, the endpoint calculation evaluates complex, receptor and peptide energies from the same geometry using an AMBER protein force field and OBC2 implicit solvent.
+Fifty snapshots are selected uniformly from each 1 ns production trajectory. For every snapshot, the endpoint calculation evaluates complex, receptor and peptide energies from the same geometry using the same GBn2 implicit-solvent endpoint protocol used for the Pipeline-3 reference candidates, enabling a harmonised cross-candidate comparison.
 
 This single-trajectory construction reduces internal-coordinate noise but does not account for independent receptor or peptide relaxation. The notebook preserves:
 
@@ -482,202 +469,77 @@ All comparisons completed successfully, but the magnitude of the RMSDs also warn
 
 ## Detailed 08h screening and CamSol contract
 
-### Candidate contract
+### Canonical full-cohort contract
 
-`08h` reads the canonical manifest exported by 08f:
+The canonical run contains 27 sequence records: F0010, CF02, CF06 and 24 unique ProteinMPNN designs. F0010 (`IGERCQYRDLK`) is an **11-residue reference peptide extracted from the native EGF sequence** (chain D, residues 38–48 in the adopted 3NJP mapping); it is not treated as an experimentally validated autonomous natural ligand. Legacy provenance labels are retained only where needed for historical traceability.
 
-```text
-08f_candidate_manifest.csv
-```
+For every sequence, 08h validates candidate identity, canonical amino acids and SHA-256 sequence hashes and computes Biopython physicochemical descriptors.
 
-with mandatory columns:
+### CamSol
 
-```text
-candidate_id
-sequence
-```
-
-The notebook normalises sequences, rejects empty or duplicated IDs, validates canonical amino acids and computes a SHA-256 hash for every sequence.
-
-### Sequence-derived descriptors
-
-Biopython `ProteinAnalysis` is used to calculate:
-
-- molecular weight;
-- theoretical isoelectric point;
-- theoretical charge at pH 7;
-- GRAVY;
-- aromaticity;
-- instability index.
-
-Every such column uses the `proxy_` prefix. Heuristic alerts are kept separate and explicitly versioned as unvalidated triage rules.
-
-The current full descriptor values include:
-
-| Candidate | Molecular weight (Da) | pI | Charge pH 7 | GRAVY | Aromaticity | Instability index |
-|---|---:|---:|---:|---:|---:|---:|
-| MPNN_NEW_01 | 1316.42 | 8.406 | 0.398 | **−1.936** | 0.091 | −5.84 |
-| MPNN_NEW_05 | 1351.51 | 8.753 | 0.847 | −1.436 | 0.091 | 15.03 |
-
-### CamSol preparation
-
-Even in proxy-only mode, 08h exports:
+The canonical run imports authentic CamSol results in **intrinsic** mode and validates the imported cohort against candidate IDs, sequences/hashes and provenance metadata. The final state is:
 
 ```text
-08h_camsol_input.fasta
-camsol_manifest_TEMPLATE.json
-camsol_summary_TEMPLATE.csv
-camsol_profiles_TEMPLATE.csv
+camsol_status = executed_imported_and_validated
 ```
 
-The FASTA contains the exact candidate IDs, sequences and hashes submitted for a future real CamSol run.
-
-### Validated CamSol import
-
-Authentic CamSol import requires:
-
-- a completed provenance manifest;
-- reported CamSol version;
-- `intrinsic` or `structure_corrected` mode;
-- execution interface;
-- run timestamp;
-- raw output paths;
-- one overall score per candidate;
-- matching candidate ID and sequence hash;
-- optional residue-level profile with complete indexing and residue identity.
-
-If these requirements are not satisfied, 08h does not populate CamSol columns. The current run correctly reports:
+CamSol is a computational prediction and must not be described as measured solubility. The downstream metric is explicitly:
 
 ```text
-camsol_executed          = False
-camsol_result_validated  = False
-camsol_overall_score     = NaN
+developability_metric_used   = camsol_overall_score
+developability_metric_source = CamSol computational prediction
 ```
 
-### Downstream selection rule
+The final QC reports candidate uniqueness, canonical sequences, hashes, finite proxy metrics, consistent CamSol provenance and explicit downstream metric source as passing.
 
-If a complete validated CamSol cohort is available, 08h can expose `camsol_overall_score` as the downstream developability signal. Otherwise it explicitly exposes `proxy_gravy`, with lower values treated as preferable. The metric name, provenance, direction and value are stored separately.
+## Detailed 08i full-cohort Bayesian optimisation
 
-## Detailed 08i integration and readiness gates
+The canonical 08i run operates on the discrete 24-design ProteinMPNN cohort. Five candidates have observed FoldX/Rosetta structural evaluations and 19 remain unobserved at that level.
 
-### Input validation
+The cohort-wide features are ProteinMPNN favourability, ESM-2 PLL and validated CamSol overall score. Features are scaled over the complete pool. A BoTorch `SingleTaskGP` is fitted in double precision to the five observed candidates.
 
-08i requires all three upstream tables:
+The acquisition function is `LogExpectedImprovement`. It is evaluated directly at every unobserved sequence rather than by continuous optimisation, because the candidate set is discrete.
+
+The saved proposal is:
 
 ```text
-08f_ProteinMPNN_cross_method_evidence.csv
-08g_ESMFold_structural_validation_summary.csv
-08h_solubility_developability_summary.csv
+MPNN_POOL_023
+VGARNQYRDLN
 ```
 
-It verifies:
+for the next 08d structural evaluation. This is a decision-support proposal from the existing ProteinMPNN pool, not a newly generated sequence and not an affinity prediction.
 
-- existence of every required file;
-- exact equality of candidate cohorts;
-- unique candidate IDs;
-- identical normalised sequences;
-- matching SHA-256 sequence hashes;
-- finite required metrics;
-- completed reference comparisons;
-- valid pLDDT status;
-- explicit developability direction and provenance;
-- internally consistent CamSol state.
-
-### Domain utilities
-
-The following raw metrics are converted into direction-aware within-cohort z-scores:
+The canonical QC confirms:
 
 ```text
-lower endpoint energy  → higher energy utility
-higher mean pLDDT      → higher pLDDT utility
-lower global RMSD      → higher RMSD utility
-08h-declared direction → higher developability utility
+full_pool_24                              True
+validated_camsol_complete                 True
+five_real_structural_observations         True
+nineteen_unobserved_pool_candidates       True
+botorch_gp_fitted                         True
+proposal_is_existing_unobserved_sequence  True
+ALL QC PASSED                             True
 ```
 
-The pLDDT and RMSD utilities are averaged into `structural_utility_z`. The final three domains are therefore energy, structure and developability rather than four independently weighted columns.
+## Detailed 08j evidence-tier workflow
 
-With two candidates, the utilities are:
+The canonical 08j run avoids comparing candidates as though they all had the same amount of evidence.
 
-| Candidate | Energy utility | Structural utility | Developability utility |
-|---|---:|---:|---:|
-| MPNN_NEW_01 | −1.0 | **+1.0** | **+1.0** |
-| MPNN_NEW_05 | **+1.0** | −1.0 | −1.0 |
+### Tier 1 — full 24-design screening
 
-### Weight scenarios
+All 24 ProteinMPNN designs can be compared using the cohort-wide ProteinMPNN, ESM-2 and validated CamSol computational signals.
 
-08i evaluates four transparent scenarios:
+### Tier 2 — five structurally validated candidates
 
-| Scenario | Energy | Structure | Developability | Outcome |
-|---|---:|---:|---:|---|
-| Equal domains | 1/3 | 1/3 | 1/3 | MPNN_NEW_01 |
-| Energy priority | 0.50 | 0.25 | 0.25 | tie |
-| Structure priority | 0.25 | 0.50 | 0.25 | MPNN_NEW_01 |
-| Developability priority | 0.25 | 0.25 | 0.50 | MPNN_NEW_01 |
+The five 08d candidates additionally possess real FoldX/Rosetta structural evaluations and can therefore be ranked at a richer evidence level.
 
-### Bayesian-optimisation gate
+### Tier 3 — two fully evaluated new candidate peptides
 
-BoTorch availability alone would not authorise model training. The notebook requires all of the following:
+`MPNN_NEW_01` and `MPNN_NEW_05` additionally possess the complete computational set used here: static structural evaluation, 1 ns MD, harmonised endpoint-energy comparison, ESMFold descriptors and CamSol prediction.
 
-- deliberate manual activation;
-- installed BoTorch;
-- at least the configured minimum number of observations;
-- a non-empty unevaluated candidate pool;
-- complete observed objectives;
-- a separately reviewed feature and model specification.
+These are complementary computational criteria rather than statistically or experimentally independent evidence classes. Equal weighting in the Tier-3 summary is a transparent decision-support convention, not a learned biological model. With two candidates, standardized values are directional contrasts rather than calibrated effect sizes.
 
-The current analysis fails the first four readiness requirements. The recorded status is:
-
-```text
-not_run_readiness_requirements_not_met
-```
-
-## Detailed 08j final-decision workflow
-
-08j consumes the harmonised 08i table rather than independently repeating upstream merges. It verifies sequence hashes, three-domain utility availability, developability provenance, CamSol consistency and Bayesian-optimisation status.
-
-### Equal-weight composite
-
-```text
-final score =
-    1/3 × energy_utility_z
-  + 1/3 × structural_utility_z
-  + 1/3 × developability_utility_z
-```
-
-The score is a decision-support heuristic. It is not an affinity or solubility prediction.
-
-### Pareto analysis
-
-A candidate is labelled Pareto-dominated only when another evaluated candidate is at least as good in all three utility domains and strictly better in at least one. Because `MPNN_NEW_05` is better in energy while `MPNN_NEW_01` is better in structure and developability, both candidates are Pareto-optimal.
-
-### Robustness accounting
-
-The notebook analyses every 08i weight scenario and distinguishes:
-
-- outright wins;
-- ties for first;
-- losses;
-- total scenarios ranked first.
-
-This avoids the earlier ambiguity in which a tied rank could be counted as a full independent victory.
-
-### Final QC
-
-The executed 08j run passed 13 checks covering:
-
-1. existence of all required 08i inputs;
-2. candidate-ID uniqueness;
-3. sequence-hash validation;
-4. presence of all three domain utilities;
-5. weights summing to one;
-6. complete ranks;
-7. complete Pareto status;
-8. complete sensitivity outcomes;
-9. consistent win/tie/loss accounting;
-10. explicit developability provenance;
-11. consistent CamSol state;
-12. explicit Bayesian-optimisation status;
-13. absence of an unreported sequence proposal.
+All final claims remain computational and require experimental validation.
 
 ---
 
@@ -693,8 +555,8 @@ The executed 08j run passed 13 checks covering:
 | Endpoint energy | comparative energetic proxy | absolute ΔG, Kd, Ki or IC50 |
 | ESMFold | confidence and structural plausibility | bound-state affinity |
 | GRAVY / physicochemical descriptors | sequence-derived developability triage | measured solubility |
-| CamSol | not executed in the current run | experimental solubility |
-| BoTorch | not executed; readiness only | validated posterior or proposal |
+| CamSol | intrinsic computational solubility prediction | experimental solubility |
+| BoTorch | pilot GP/acquisition-based selection of the next costly evaluation | affinity prediction or an iterative closed-loop optimisation campaign |
 
 No single method is sufficient on its own.
 
@@ -761,8 +623,8 @@ Primarily used for `08e–08f`.
 
 ### Optional software
 
-- **CamSol:** authentic results can be imported by 08h with validated provenance. CamSol was not executed in the current run.
-- **BoTorch:** reserved for a future expanded observed design set and an explicit unevaluated candidate pool. It was not installed or executed in the current run.
+- **CamSol:** authentic intrinsic-mode results were imported and validated in the canonical 08h full-cohort run. These are computational predictions, not measured solubility.
+- **BoTorch:** the canonical 08i full-cohort run fitted a pilot `SingleTaskGP` to five structurally observed candidates and evaluated `LogExpectedImprovement` over 19 unobserved ProteinMPNN pool members. This is a next-evaluation selector, not a complete iterative optimisation campaign.
 
 ---
 
@@ -872,22 +734,22 @@ The 08g–08j notebooks also produce QC tables, provenance JSON files, figures a
 
 ### 08i
 
-- harmonised observed evidence;
-- exploratory ranking;
-- weight-sensitivity table;
-- candidate-proposal status;
-- BoTorch-readiness table;
-- evidence-integration figure;
-- `08i_QC.csv`, provenance JSON and report.
+- full 24-design feature pool;
+- five-candidate observed structural training set;
+- 19-member unobserved discrete candidate pool;
+- fitted BoTorch `SingleTaskGP`;
+- `LogExpectedImprovement` scores over the unobserved pool;
+- next-evaluation proposal (`MPNN_POOL_023`);
+- QC, provenance and run report.
 
 ### 08j
 
-- final multi-objective ranking;
-- scenario-level outcomes;
-- candidate robustness summary;
-- evidence-status table;
-- final multi-panel figure;
-- `08j_QC.csv`, provenance JSON and report.
+- Tier-1 full 24-design screening;
+- Tier-2 five-candidate structurally validated ranking;
+- Tier-3 two-candidate complete computational comparison;
+- evidence-tier status and provenance;
+- multi-objective decision-support outputs;
+- QC and final report.
 
 ---
 
@@ -895,53 +757,55 @@ The 08g–08j notebooks also produce QC tables, provenance JSON files, figures a
 
 1. ESM-2 and ProteinMPNN are not affinity predictors.
 2. FoldX and Rosetta scores are model-dependent approximations.
-3. The 1 ns MD trajectories are useful for comparative screening but do not establish full conformational convergence.
-4. The endpoint calculation is a single-trajectory MM/GBSA-like proxy, not absolute binding free energy.
+3. The 1 ns MD trajectories support short-timescale comparative screening but do not establish full conformational convergence.
+4. The endpoint calculation is a harmonised single-trajectory GBn2/MM-GBSA-like proxy, not absolute binding free energy.
 5. ESMFold confidence and RMSD do not demonstrate receptor binding.
-6. GRAVY, charge, pI and related descriptors are developability proxies, not measured solubility.
-7. CamSol was not executed; no CamSol-derived score is claimed.
-8. Bayesian optimisation was not executed because two observations and no candidate pool do not support a defensible campaign.
-9. Within-cohort z-scores for two candidates mostly encode ordering.
-10. Equal domain weights are transparent but subjective; sensitivity scenarios must accompany the final ranking.
-11. Pareto optimality means only that no evaluated candidate dominates another in every included domain.
-12. Experimental validation remains required.
-
-Experimental studies would be needed to determine binding, affinity, inhibition, selectivity, solubility, stability, toxicity and cellular activity.
+6. GRAVY, charge, pI and related descriptors are sequence-derived developability proxies, not measured solubility.
+7. CamSol was executed/imported and validated for the canonical full cohort, but remains a computational solubility prediction rather than an experimental measurement.
+8. The BoTorch run is a small-sample pilot with five structural observations and 19 unobserved pool members. It selects a candidate for the next expensive evaluation; it does not establish affinity and is not a completed iterative optimisation campaign.
+9. The computational evidence domains are complementary but are not assumed to be statistically or experimentally independent.
+10. Multi-objective weights are transparent decision-support choices rather than experimentally learned biological weights.
+11. Evidence tiers must be preserved: a candidate lacking an expensive downstream evaluation must not be assigned favourable values for missing evidence.
+12. Experimental validation remains required for binding, affinity, inhibition, selectivity, solubility, stability, toxicity and cellular activity.
 
 ---
 
 # Final Pipeline 4 conclusion
 
-Pipeline 4 successfully adds an independent ESM-2 and ProteinMPNN design branch to PEARL and carries the resulting candidates through layered structural, dynamic, energetic and decision-support analyses.
+Pipeline 4 adds a complementary ESM-2 and ProteinMPNN design branch to PEARL and carries selected candidates through structural, dynamic, energetic, conformational, developability and decision-support analyses.
 
-The final cross-method picture is:
-
-```text
-Established references
-F0010  natural / miniaturised reference
-CF02   strongest dynamic-stability reference
-CF06   strongest structural / endpoint-energy reference
-
-ProteinMPNN candidates
-MPNN_NEW_01  best balanced exploratory candidate
-MPNN_NEW_05  endpoint-energy-favoured alternative
-```
-
-The final ranking among the two advanced AI-derived candidates is:
+The established references remain:
 
 ```text
-1. MPNN_NEW_01  TGPRNQYRDLP   composite  0.333
-2. MPNN_NEW_05  IGPRHQYRDLP   composite −0.333
+F0010  11-residue reference peptide extracted from native EGF
+CF02   strongest Pipeline-3 dynamic-stability reference
+CF06   strongest Pipeline-3 structural / endpoint-energy reference
 ```
 
-This ordering reflects a transparent equal-weight trade-off:
+The principal AI-derived candidates are:
 
-- `MPNN_NEW_01` is favoured by short-timescale MD, ESMFold structural validation and the GRAVY proxy;
-- `MPNN_NEW_05` is favoured by FoldX, Rosetta and endpoint energy;
-- both candidates are Pareto-optimal;
-- the energy-priority scenario produces a tie;
-- CamSol and Bayesian optimisation remain future extensions rather than completed analyses.
+```text
+MPNN_NEW_01 = TGPRNQYRDLP
+MPNN_NEW_05 = IGPRHQYRDLP
+```
 
-The strongest methodological result is the complementarity of the rankings. Pipeline 4 therefore reinforces the PEARL principle that candidate prioritisation should rely on converging evidence, explicit provenance and visible uncertainty—not on a single AI, structural, dynamic, energetic or composite score.
+Their evidence is complementary rather than uniformly concordant. `MPNN_NEW_01` is favoured by several short-timescale dynamic and ESMFold structural descriptors, whereas `MPNN_NEW_05` is favoured by the harmonised endpoint-energy comparison and parts of the static structural evaluation.
 
-All final candidates remain computational hypotheses. Longer replicated simulations, more rigorous free-energy calculations, authentic CamSol results where appropriate and experimental validation are required before quantitative biological claims can be made.
+The canonical full-cohort extension is now complete at the computational decision-support level:
+
+```text
+08h: 27-sequence cohort; authentic intrinsic CamSol imported and validated
+08i: 24 ProteinMPNN designs; 5 observed structural candidates; 19 unobserved
+     SingleTaskGP + LogExpectedImprovement executed
+     next proposed structural evaluation: MPNN_POOL_023 = VGARNQYRDLN
+08j: evidence-tier integration
+     Tier 1 = 24 designs
+     Tier 2 = 5 structurally evaluated candidates
+     Tier 3 = 2 fully evaluated new candidate peptides
+```
+
+The BoTorch proposal is not a new sequence or validated lead; it identifies which existing pool member should receive the next costly structural evaluation. Likewise, CamSol is a computational prediction rather than measured solubility, and the Tier-3 score is a decision-support summary rather than an affinity or therapeutic ranking.
+
+The methodological conclusion of Pipeline 4 is therefore not that one computational method identifies a universally superior peptide. Instead, PEARL preserves provenance, exposes disagreement among complementary computational criteria and allocates increasingly expensive evaluations through explicit evidence tiers.
+
+All candidates remain computational hypotheses. Experimental work and, where appropriate, longer replicated simulations and more rigorous free-energy calculations are required before quantitative biological or therapeutic claims can be made.
