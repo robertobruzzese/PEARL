@@ -1,19 +1,31 @@
+PEARL Pipeline 5 --- Pharmacophore, Small-Molecule Lead Discovery and
+Post-selection Validation
 
-PEARL Pipeline 5 — Pharmacophore, Small-Molecule Lead Discovery and Post-selection Validation
+**PEARL --- Peptide Extraction and AI-guided Refinement for Ligand
+design**\
+Target: **EGFR extracellular domain, PDB 3NJP chain B**\
+Pipeline 5: **MD-derived pharmacophore → small-molecule
+generation/screening → chemistry filtering → DiffDock → Vina refinement
+→ integrated lead selection → lead MD → endpoint energetics →
+Windows/CUDA free-ligand and bound-complex follow-up simulations**
 
-**PEARL — Peptide Extraction and AI-guided Refinement for Ligand design**  
-Target: **EGFR extracellular domain, PDB 3NJP chain B**  
-Pipeline 5: **MD-derived pharmacophore → small-molecule generation/screening → chemistry filtering → DiffDock → Vina refinement → integrated lead selection → lead MD → endpoint energetics → Windows/CUDA free-ligand and bound-complex follow-up simulations**
-
----
+------------------------------------------------------------------------
 
 ## Overview
 
-Pipeline 5 translates the structural information learned from the peptide–EGFR system into a small-molecule lead-discovery workflow.
+Pipeline 5 translates the structural information learned from the
+peptide--EGFR system into a small-molecule lead-discovery workflow.
 
-The pipeline starts from peptide–protein molecular-dynamics ensembles generated upstream, extracts a consensus pharmacophore, screens a REINVENT4-generated molecular library against that pharmacophore, applies drug-likeness and liability filters, docks chemically acceptable candidates to EGFR with DiffDock, locally re-scores/refines the selected poses with AutoDock Vina, and finally integrates the independent evidence streams into a transparent lead-prioritization scheme.
+The pipeline starts from peptide--protein molecular-dynamics ensembles
+generated upstream, extracts a consensus pharmacophore, screens a
+REINVENT4-generated molecular library against that pharmacophore,
+applies drug-likeness and liability filters, docks chemically acceptable
+candidates to EGFR with DiffDock, locally re-scores/refines the selected
+poses with AutoDock Vina, and finally integrates multiple partially
+dependent computational criteria into a transparent historical
+lead-prioritization scheme.
 
-```text
+``` text
 MD peptide–EGFR ensembles
         │
         ▼
@@ -39,7 +51,7 @@ MD peptide–EGFR ensembles
 09g  Integrated cross-method lead selection
         │
         ▼
-09h  MOL00583–EGFR molecular-dynamics validation
+09h  MOL00583–EGFR molecular-dynamics follow-up
         │
         ▼
 09i  MOL00583–EGFR MM/GBSA-like endpoint analysis
@@ -47,41 +59,103 @@ MD peptide–EGFR ensembles
         ├──────────────► 09j  MOL00583 free in water
         │                    Windows/CUDA, replicate MD
         │
-        └──────────────► 09k  MOL00583–EGFR bound-complex replicas
+        └──────────────► 09k  MOL00583–EGFR complex replicas
                              Windows/CUDA, RTX 4090
 ```
 
-After selection in 09g, 09h and 09i evaluate the selected lead dynamically and energetically. The Windows/CUDA follow-up stages 09j and 09k extend this post-selection validation by comparing the neutral MOL00583 microstate in free water with longer replicated simulations of the bound MOL00583–EGFR complex. These stages do not rerank the four finalists or change their pharmacophore provenance. The final result remains **computational prioritization with preliminary post-selection evidence**, not experimental evidence of binding.
+After selection in 09g, 09h and 09i evaluate the selected lead
+dynamically and energetically. The Windows/CUDA follow-up stages 09j and
+09k extend this post-selection validation by comparing the neutral
+MOL00583 microstate in free water with longer replicated simulations of
+the bound MOL00583--EGFR complex. These stages do not rerank the four
+finalists or change their pharmacophore provenance. The final result
+remains **computational prioritization with preliminary post-selection
+evidence**, not experimental evidence of binding.
 
-This README consolidates the operational instructions for 09a–09k. Recorded 09h/09i results were verified on 13 September 2026. The Windows/CUDA extensions 09j and 09k are documented here together with their stage-specific execution notes; production CUDA status must be interpreted exactly as reported in the corresponding notebook outputs and stage notes.
+This README consolidates the operational instructions for 09a--09k.
+Recorded 09h/09i results were verified on 13 September 2026. The
+Windows/CUDA extensions 09j and 09k are documented here together with
+their stage-specific execution notes; production CUDA status must be
+interpreted exactly as reported in the corresponding notebook outputs
+and stage notes.
 
----
+------------------------------------------------------------------------
 
 ## Notebook map
 
-| Notebook | Purpose | Main output |
-|---|---|---|
-| `09a_MD_Derived_Pharmacophore_Extraction*.ipynb` | Extract persistent pharmacophoric features from peptide–EGFR MD ensembles | Persistent HBD/HBA/HYD/ARO/POS/NEG features and consensus pharmacophore |
-| `09b_Pharmacophore_Consolidation_and_Screening_Ready_Model*.ipynb` | Consolidate redundant features into a screening-ready model | Mandatory / optional / contextual pharmacophore groups |
-| `09c_Pharmacophore_Constrained_Molecular_Generation*.ipynb` | Acquire REINVENT4 molecules, generate conformers and screen against the pharmacophore | Ranked molecular library and strict pharmacophore hits |
-| `09d_Chemical_Filtering_Druglikeness_Liabilities_Diversity*.ipynb` | Evaluate drug-likeness, structural alerts, synthetic accessibility and diversity | Chemically eligible docking shortlist |
-| `09e_DiffDock_Docking_and_Pose_Interaction_Evaluation*.ipynb` | Dock shortlisted molecules and characterize receptor engagement | Best DiffDock pose per candidate |
-| `09f_Vina_Local_Rescoring_and_Interaction_Refinement*.ipynb` | Score the selected DiffDock pose with Vina and locally optimize it | Comparative Vina energetic ranking and local pose RMSD |
-| `09g_Integrated_Pipeline5_Lead_Selection*.ipynb` | Integrate pharmacophore, chemistry, DiffDock, contacts and Vina evidence | Final multi-criterion lead priority |
-| `09h_MOL00583_EGFR_MD_Validation*.ipynb` | Validate the 09f pose of the lead selected in 09g using explicit-solvent MD | Trajectories, RMSD/RMSF, retention, contacts, QC and 09i manifest |
-| `09i_MOL00583_EGFR_MMGBSA_Endpoint_Analysis*.ipynb` | Evaluate snapshots from the 1 ns 09h run using GBn2/ACE endpoint energetics | Energy components, temporal diagnostics, QC and report |
-| `09j_MOL00583_Free_Water_MD_Comparison*.ipynb` | Simulate the neutral MOL00583 microstate free in water on Windows/CUDA for conformational and hydration comparison with the bound state | Replicate trajectories, ligand RMSD/radius diagnostics, hydration counts, QC and summary |
-| `09k_MOL00583_EGFR_Bound_Replicates*.ipynb` | Run longer replicated MD of the bound MOL00583–EGFR complex on Windows/CUDA / RTX 4090 | Three 10 ns bound replicas, contact/RMSD/RMSF diagnostics, QC and comparison-ready outputs |
+  ----------------------------------------------------------------------------------------------------------------------
+  Notebook                                                             Purpose                 Main output
+  -------------------------------------------------------------------- ----------------------- -------------------------
+  `09a_MD_Derived_Pharmacophore_Extraction*.ipynb`                     Extract persistent      Persistent
+                                                                       pharmacophoric features HBD/HBA/HYD/ARO/POS/NEG
+                                                                       from peptide--EGFR MD   features and consensus
+                                                                       ensembles               pharmacophore
 
----
+  `09b_Pharmacophore_Consolidation_and_Screening_Ready_Model*.ipynb`   Consolidate redundant   Mandatory / optional /
+                                                                       features into a         contextual pharmacophore
+                                                                       screening-ready model   groups
 
-## 09a — MD-derived pharmacophore extraction
+  `09c_Pharmacophore_Constrained_Molecular_Generation*.ipynb`          Acquire REINVENT4       Ranked molecular library
+                                                                       molecules, generate     and strict pharmacophore
+                                                                       conformers and screen   hits
+                                                                       against the             
+                                                                       pharmacophore           
 
-The first stage extracts pharmacophoric information from the peptide–EGFR MD ensembles.
+  `09d_Chemical_Filtering_Druglikeness_Liabilities_Diversity*.ipynb`   Evaluate drug-likeness, Chemically eligible
+                                                                       structural alerts,      docking shortlist
+                                                                       synthetic accessibility 
+                                                                       and diversity           
+
+  `09e_DiffDock_Docking_and_Pose_Interaction_Evaluation*.ipynb`        Dock shortlisted        Best DiffDock pose per
+                                                                       molecules and           candidate
+                                                                       characterize receptor   
+                                                                       engagement              
+
+  `09f_Vina_Local_Rescoring_and_Interaction_Refinement*.ipynb`         Score the selected      Comparative Vina
+                                                                       DiffDock pose with Vina energetic ranking and
+                                                                       and locally optimize it local pose RMSD
+
+  `09g_Integrated_Pipeline5_Lead_Selection*.ipynb`                     Integrate               Final multi-criterion
+                                                                       pharmacophore,          lead priority
+                                                                       chemistry, DiffDock,    
+                                                                       contacts and Vina       
+                                                                       evidence                
+
+  `09h_MOL00583_EGFR_MD_Validation*.ipynb`                             Validate the 09f pose   Trajectories, RMSD/RMSF,
+                                                                       of the lead selected in retention, contacts, QC
+                                                                       09g using               and 09i manifest
+                                                                       explicit-solvent MD     
+
+  `09i_MOL00583_EGFR_MMGBSA_Endpoint_Analysis*.ipynb`                  Evaluate snapshots from Energy components,
+                                                                       the 1 ns 09h run using  temporal diagnostics, QC
+                                                                       GBn2/ACE endpoint       and report
+                                                                       energetics              
+
+  `09j_MOL00583_Free_Water_MD_Comparison*.ipynb`                       Simulate the neutral    Replicate trajectories,
+                                                                       MOL00583 microstate     ligand RMSD/radius
+                                                                       free in water on        diagnostics, hydration
+                                                                       Windows/CUDA for        counts, QC and summary
+                                                                       conformational and      
+                                                                       hydration comparison    
+                                                                       with the bound state    
+
+  `09k_MOL00583_EGFR_Bound_Replicates*.ipynb`                          Run longer replicated   Three 10 ns bound
+                                                                       MD of the bound         replicas,
+                                                                       MOL00583--EGFR complex  contact/RMSD/RMSF
+                                                                       on Windows/CUDA / RTX   diagnostics, QC and
+                                                                       4090                    comparison-ready outputs
+  ----------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 09a --- MD-derived pharmacophore extraction
+
+The first stage extracts pharmacophoric information from the
+peptide--EGFR MD ensembles.
 
 Three upstream peptide candidates were used:
 
-```text
+``` text
 CF02
 CF06
 MPNN_NEW_05
@@ -89,7 +163,7 @@ MPNN_NEW_05
 
 Feature families include:
 
-```text
+``` text
 HBD  hydrogen-bond donor
 HBA  hydrogen-bond acceptor
 HYD  hydrophobic
@@ -100,7 +174,7 @@ NEG  negatively charged
 
 ### Production result
 
-```text
+``` text
 100 frames / candidate
 300 frames total
 5330 active feature observations
@@ -110,19 +184,21 @@ NEG  negatively charged
 ALL QC PASSED: True
 ```
 
-The pharmacophore is also exported in an RDKit Pharm3D-compatible representation.
+The pharmacophore is also exported in an RDKit Pharm3D-compatible
+representation.
 
----
+------------------------------------------------------------------------
 
-## 09b — Pharmacophore consolidation
+## 09b --- Pharmacophore consolidation
 
-The 17 core consensus features are spatially consolidated to reduce redundancy and construct a practical screening model.
+The 17 core consensus features are spatially consolidated to reduce
+redundancy and construct a practical screening model.
 
 A redundancy radius of approximately **1.25 Å** is used.
 
 The resulting model contains:
 
-```text
+``` text
 10 consolidated groups
 5 mandatory groups
 4 optional groups
@@ -131,38 +207,41 @@ The resulting model contains:
 
 Screening rule:
 
-```text
+``` text
 all mandatory groups
 +
 at least one optional group
 ```
 
-This stage converts the raw MD-derived feature map into a screening-ready molecular hypothesis.
+This stage converts the raw MD-derived feature map into a
+screening-ready molecular hypothesis.
 
----
+------------------------------------------------------------------------
 
-## 09c — Molecular generation/acquisition and pharmacophore screening
+## 09c --- Molecular generation/acquisition and pharmacophore screening
 
-The production run uses **REINVENT4** as an external molecular-generation backend.
+The production run uses **REINVENT4** as an external
+molecular-generation backend.
 
 The REINVENT4 run sampled:
 
-```text
+``` text
 5000 requested SMILES
 ```
 
 The notebook then analyzes a production subset of:
 
-```text
+``` text
 1000 molecules
 996 successfully embedded in 3D
 ```
 
-For each molecule, multiple conformers are generated and aligned against the screening-ready pharmacophore.
+For each molecule, multiple conformers are generated and aligned against
+the screening-ready pharmacophore.
 
 ### Production result
 
-```text
+``` text
 83 molecules with complete mandatory assignments
 2 strict pharmacophore-positive molecules
 ALL TECHNICAL QC PASSED: True
@@ -170,67 +249,72 @@ ALL TECHNICAL QC PASSED: True
 
 The two strict hits were:
 
-```text
+``` text
 MOL00570
 MOL00336
 ```
 
-Both showed poor downstream medicinal-chemistry properties and were not promoted as final docking leads.
+Both showed poor downstream medicinal-chemistry properties and were not
+promoted as final docking leads.
 
 ### Important methodological note
 
 The current implementation uses:
 
-```text
+``` text
 unconstrained REINVENT4 de novo sampling
 +
 downstream pharmacophore screening
 ```
 
-It should therefore **not** be described as pharmacophore-conditioned REINVENT4 reinforcement learning.
+It should therefore **not** be described as pharmacophore-conditioned
+REINVENT4 reinforcement learning.
 
-The pharmacophore acts as a post-generation structural filter in the implemented production workflow.
+The pharmacophore acts as a post-generation structural filter in the
+implemented production workflow.
 
----
+------------------------------------------------------------------------
 
-## 09d — Chemical filtering, drug-likeness and diversity
+## 09d --- Chemical filtering, drug-likeness and diversity
 
-09d evaluates pharmacophore-supported candidates using cheminformatic descriptors and structural-alert filters.
+09d evaluates pharmacophore-supported candidates using cheminformatic
+descriptors and structural-alert filters.
 
 The analysis includes:
 
-- molecular weight;
-- cLogP;
-- TPSA;
-- H-bond donors and acceptors;
-- rotatable bonds;
-- formal charge;
-- ring count;
-- QED;
-- Fsp3;
-- Lipinski-style criteria;
-- Veber-style criteria;
-- PAINS alerts;
-- Brenk alerts;
-- RDKit synthetic-accessibility score when available;
-- Morgan fingerprints;
-- Tanimoto similarity;
-- Butina clustering.
+-   molecular weight;
+-   cLogP;
+-   TPSA;
+-   H-bond donors and acceptors;
+-   rotatable bonds;
+-   formal charge;
+-   ring count;
+-   QED;
+-   Fsp3;
+-   Lipinski-style criteria;
+-   Veber-style criteria;
+-   PAINS alerts;
+-   Brenk alerts;
+-   RDKit synthetic-accessibility score when available;
+-   Morgan fingerprints;
+-   Tanimoto similarity;
+-   Butina clustering.
 
-A key design decision is that **strict pharmacophore evidence and chemical eligibility remain separate concepts**.
+A key design decision is that **strict pharmacophore evidence and
+chemical eligibility remain separate concepts**.
 
 ### Strict hits
 
 The two strict 09c pharmacophore hits were chemically poor:
 
-```text
+``` text
 MOL00336  CHEM_FAIL
 MOL00570  CHEM_FAIL
 ```
 
 Thus:
 
-```text
+``` text
 strict pharmacophore hits eligible for primary docking = 0
 ```
 
@@ -240,7 +324,7 @@ A chemically acceptable near-miss rescue track was therefore retained.
 
 Final 09d docking shortlist:
 
-```text
+``` text
 MOL00053
 MOL00484
 MOL00273
@@ -253,7 +337,7 @@ MOL00489
 
 All eight are:
 
-```text
+``` text
 docking_track        = NEAR_MISS_RESCUE
 pharmacophore_status = NEAR_MISS_MANDATORY_ONLY
 chemistry_class      = CHEM_PASS
@@ -261,709 +345,327 @@ chemistry_class      = CHEM_PASS
 
 This provenance is preserved throughout all downstream notebooks.
 
----
+------------------------------------------------------------------------
 
-## 09e — DiffDock docking and interaction evaluation
+## 09e --- DiffDock docking and interaction evaluation
 
-The eight chemically eligible rescue candidates are docked to **EGFR chain B from PDB 3NJP** using DiffDock.
+The eight chemically eligible rescue candidates were docked to **EGFR
+chain B from PDB 3NJP** using DiffDock (10 poses per molecule; 80 poses
+total). The historical 09e procedure selected one pose per molecule
+using DiffDock confidence and descriptive receptor-contact support.
 
-Production settings:
+### Historical selected-pose ranking
 
-```text
-8 candidates
-10 DiffDock samples / candidate
-20 inference steps
-80 pose files total
+``` text
+1 MOL00273
+2 MOL00583
+3 MOL00600
+4 MOL00484
+5 MOL00857
+6 MOL00053
+7 MOL00489
+8 MOL00294
 ```
 
-All eight candidates produced the full set of ten poses.
-
-For every pose, 09e computes descriptive structural metrics including:
-
-```text
-DiffDock confidence
-minimum receptor–ligand distance
-number of contacted receptor residues
-ligand heavy-atom contact fraction
-severe-clash flag
-```
-
-A `pose_support_score` is used only as a descriptive pose-selection criterion; it is not interpreted as a physical binding energy.
-
-### 09e selected-pose ranking
-
-```text
-1  MOL00273
-2  MOL00583
-3  MOL00600
-4  MOL00484
-5  MOL00857
-6  MOL00053
-7  MOL00489
-8  MOL00294
-```
-
-Representative selected-pose values:
-
-```text
-MOL00273
-DiffDock confidence     -0.88
-pose support             0.850
-contacted residues       7
-ligand contact fraction  0.826
-
-MOL00583
-DiffDock confidence     -2.02
-pose support             0.827
-contacted residues      12
-ligand contact fraction  0.933
-
-MOL00484
-pose support             0.770
-contacted residues      14
-ligand contact fraction  1.000
-```
-
-No docking result changes the pharmacophore provenance: all eight remain rescue candidates.
-
----
-
-## 09f — AutoDock Vina local energetic refinement
-
-09f adds a second, independent docking-scoring layer to the top four 09e candidates:
-
-```text
-MOL00273
-MOL00583
-MOL00600
-MOL00484
-```
-
-The procedure deliberately does **not** perform a new global Vina docking search.
-
-Instead:
-
-```text
-selected DiffDock pose
-        ↓
-Vina score of the unchanged pose
-        ↓
-short local Vina optimization
-        ↓
-Vina score after optimization
-        ↓
-DiffDock → Vina local heavy-atom RMSD
-```
-
-### Production result
-
-| Candidate | Vina before | Vina after | Δ local optimization | Local RMSD |
-|---|---:|---:|---:|---:|
-| MOL00600 | 1.998 | **-5.791** | -7.789 | 0.190 Å |
-| MOL00583 | 0.384 | **-4.314** | -4.698 | 0.586 Å |
-| MOL00484 | -0.556 | **-4.267** | -3.711 | 0.057 Å |
-| MOL00273 | -2.982 | **-3.937** | -0.955 | 0.203 Å |
-
-Interpretation:
-
-- **MOL00600** has the strongest post-refinement Vina support.
-- **MOL00484** shows exceptional local geometric stability.
-- **MOL00583** provides balanced structural and energetic support.
-- **MOL00273** has the strongest original DiffDock ranking but weaker final Vina ranking.
-
-`ALL QC PASSED: True`
-
-### Vina is not a binding free-energy calculation
-
-The Vina values are empirical docking-scoring-function outputs and are used only for comparative ranking within the common protocol.
-
-They must **not** be reported as rigorous ΔG, MM-GBSA or MM-PBSA binding free energies.
-
----
-
-## 09g — Integrated lead selection
-
-09g completes lead prioritization by combining six evidence axes:
-
-```text
-1. pharmacophore fit
-2. chemistry / drug-likeness
-3. DiffDock structural support
-4. receptor engagement
-5. Vina energetic support
-6. local geometry stability
-```
-
-No raw heterogeneous values are added into a single physical score.
-
-Instead, each candidate is ranked independently on each evidence axis and receives a support flag when it falls in the top two among the four finalists.
-
-The support count is used only for transparent **priority assignment**.
-
-### Final ranking
-
-| 09g rank | Candidate | Priority | Top-2 support | Interpretation |
-|---:|---|---|---:|---|
-| **1** | **MOL00583** | **TIER 1** | **4 / 6** | Strong cross-method support |
-| 2 | MOL00484 | TIER 2 | 3 / 6 | Orthogonal follow-up lead |
-| 3 | MOL00600 | TIER 2 | 3 / 6 | Orthogonal follow-up lead |
-| 4 | MOL00273 | TIER 2 | 2 / 6 | Method-specific / orthogonal lead |
-
-All four finalists are Pareto non-dominated in the implemented rank-space analysis.
-
-### Primary computational lead: MOL00583
-
-`MOL00583` is selected as the **primary computational lead** because it provides the broadest cross-method convergence.
-
-Evidence-axis ranks:
-
-```text
-pharmacophore fit          2
-chemistry                  4
-DiffDock structural        2
-receptor engagement        2
-Vina energetic             2
-local geometry stability   4
-```
-
-Key values:
-
-```text
-mandatory pharmacophore RMSD     1.341 Å
-DiffDock rank                    2
-DiffDock confidence             -2.020
-pose-support score               0.827
-contacted receptor residues     12
-ligand contact fraction          0.933
-Vina score after refinement     -4.314
-DiffDock → Vina local RMSD       0.586 Å
-```
-
-The other finalists remain scientifically useful because they are favored by different methods:
-
-```text
-MOL00484  strongest chemistry / receptor-engagement /
-          local-geometry support
-
-MOL00600  strongest pharmacophore-fit and Vina energetic support
-
-MOL00273  strongest original DiffDock structural support
-```
-
-`ALL QC PASSED: True`
-
----
-
-## 09h — MOL00583–EGFR molecular-dynamics validation
-
-09h follows **09g** and starts from the **Vina-refined MOL00583 pose exported by 09f**. The receptor is EGFR extracellular chain B from 3NJP. This is not a kinase-domain simulation. The selected molecule remains `TIER_1_PRIMARY_COMPUTATIONAL_LEAD`, `NEAR_MISS_MANDATORY_ONLY` and `NEAR_MISS_RESCUE`.
-
-### Protocol and inputs
-
-The protocol follows Pipeline 3 notebooks 07a/07d: OpenMM, AMBER ff14SB (`amber14/protein.ff14SB.xml`), TIP3P (`amber14/tip3p.xml`), 300 K, 1 bar, 0.15 M added NaCl with neutralization, 1 nm padding/cutoff and a 2 fs timestep. MOL00583 uses OpenFF Sage `openff-2.2.1` with AM1-BCC charges generated through AmberTools. The formal ligand microstate is inherited from the SDF; protein preparation uses pH 7.4. Production has **no positional restraints**.
-
-Required files relative to `PROJECT_ROOT`:
-
-```text
-outputs/pipeline_5_pharmacophore_09f_vina_refinement/
-  inputs/09f_receptor_chain_B.pdb
-  inputs/MOL00583_diffdock_pose_H.sdf
-  structures/MOL00583_09f_vina_local_minimized.sdf
-  tables/09f_QC.csv
-outputs/pipeline_5_pharmacophore_09g_integrated_lead_selection/
-  tables/09g_integrated_lead_priority.csv
-  tables/09g_QC.csv
-```
-
-Discovery checks the current directory and the historical `~/Desktop/venv` root; configure `PROJECT_ROOT` explicitly if needed. No missing inputs are fabricated, and no alternative DiffDock pose or SMILES-generated conformation is substituted. Missing files, failed upstream QC, incompatible identity/tier or pose coordinates cause an explicit error. Altloc A follows 09f's choice for B:172.
-
-Missing atoms and structural discontinuities are recorded in `tables/preparation_qc.json`. Missing loops/glycans are not automatically reconstructed; a PDB without SEQRES cannot establish sequence completeness. If required, review/correct the model and document `STRUCTURE_REVIEW_NOTE`; do not fill the note merely to bypass a check.
-
-### Running in Jupyter
-
-Use **Python (PEARL MD 09h)**. The Jupyter server and notebook kernel can belong to different environments; selecting the correct kernel is essential.
-
-1. With `RUN_MD=False`, run the notebook for input/chemistry checks. The “Preflight completato” stop is intentional.
-2. Set `RUN_MD=True`, `FAST_TEST_MODE=True`, restart the kernel and run all cells for the short test.
-3. Save a separate executed TEST=True copy. For production, keep `RUN_MD=True` and set `FAST_TEST_MODE=False`, restart and run all cells. Save the executed TEST=False copy too.
-
-| Mode | NVT | NPT | Production | Saved frames | Frames summarized after 20% discard |
-|---|---:|---:|---:|---:|---:|
-| `FAST_TEST_MODE=True` | 10 ps | 10 ps | 50 ps | 25 | 20 |
-| `FAST_TEST_MODE=False` | 100 ps | 100 ps | 1,000 ps | 500 | 400 |
-
-Changing the filename alone does not change the settings. `False` runs a longer simulation; it does not accelerate it. For additional independent replicas change `SEED`; longer studies require changing `PRODUCTION_PS` and evaluating convergence.
-
-### Recorded results
-
-| Metric | 50 ps test | 1 ns production |
-|---|---:|---:|
-| Technical QC | Passed | Passed |
-| Mean ligand heavy-atom RMSD after EGFR Cα fit | 1.90 Å | 2.09 Å |
-| Descriptive site-retention fraction, analyzed frames | 100% | 100% |
-| Residues with contact occupancy ≥50% | 14 | 11 |
-
-The reference is the prepared initial complex derived from 09f; the ligand is not independently fitted. Contacts use a 4.5 Å heavy-atom cutoff. The initial site is defined within 6 Å; descriptive retention requires site contact and ligand/site geometric-center distance ≤10 Å. RMSF is evaluated for site Cα atoms after receptor alignment.
-
-In the 1 ns run, mean ligand RMSD rises from 1.95 to 2.24 Å between the two analyzed halves; the mean fraction of initial contacts retained falls from approximately 85% to 74%. Three geometric hydrogen-bond candidates have occupancies of only 0.25%, 2.5% and 0.5%, not three persistent hydrogen bonds. The ligand remains in the site by the implemented criterion while interactions reorganize. This does not establish long-term stability, convergence or affinity.
-
-### Outputs, progress and recovery
-
-Each run creates a unique folder under `outputs/pipeline_5_pharmacophore_09h_mol00583_md/` relative to the Jupyter working directory. It contains prepared/solvated/final structures, ligand chemistry with charges, OpenMM systems/states/checkpoints, full and solute DCD trajectories, atom/bond maps, analysis tables and plots, `09h_summary.json`, `09h_report.md`, `provenance.json`, and `09i_manifest.json`.
-
-Recorded runs:
-
-```text
-test:       20260912T161426_861450Z_seed20260912
-production: 20260912T174721_843455Z_seed20260912
-```
-
-Inspect `tables/nvt.csv`, `tables/npt.csv` and `tables/production.csv` without interrupting the kernel. Production logs every 2 ps of simulated time; `Time (ps)` and `Speed (ns/day)` report progress and throughput. Minimization may be silent until `states/minimized.xml` appears. Do not queue diagnostic cells in the occupied kernel or rerun the production cell while it is active.
-
-There is no automatic resume. Interrupted runs retain partial outputs and checkpoints. A new execution should restart the kernel and create a new run. Expert continuation requires compatible checkpoint/system/integrator and separately recorded trajectory segments; do not overwrite or blindly concatenate earlier output.
-
----
-
-## 09i — MOL00583–EGFR endpoint energetics
-
-09i uses the **1 ns production trajectory from 09h**, without new MD, new docking or recalculation of AM1-BCC charges. Both 09i test and production modes use that same trajectory: they differ only in the number of sampled snapshots.
-
-### Method
-
-Single-trajectory **MM/GBSA-like GBn2/ACE**, NoCutoff, solute/solvent dielectric constants 1/78.5 and kappa=0, following the model selected in Pipeline 3 notebook 07e (`implicit/gbn2.xml`). Kappa=0 is the endpoint model setting, not an implicit reproduction of the 0.15 M salt used during explicit-solvent MD.
-
-The calculation preserves 09h charges, sigma and epsilon. For identical component coordinates in the noncovalent complex, intramolecular MM terms cancel in C−R−L. Direct receptor–ligand Coulomb and Lennard-Jones interactions are therefore evaluated separately and checked against an independent OpenMM C−R−L calculation on the first snapshot. GB polar and ACE contributions are evaluated for complex, receptor and ligand. No snapshot minimization or separate component relaxation is performed.
-
-GBn2 radii and screening parameters are generated from the solute topology and retained across components. Unsupported forces, cross-component covalent terms/exceptions, virtual sites, mismatched maps or broken coordinate continuity cause an explicit error. The saved analysis XML systems contain two GB forces for decomposition: **they are not MD systems and their force-group energies must not be blindly summed**.
-
-Compared with 07e, 09i excludes the first 20% of production and uses the AMBER/OpenFF small-molecule system from 09h. Do not directly compare these values with peptide endpoint results without harmonizing protocols. There is no ranking with a single ligand.
-
-### Inputs and execution
-
-Select **Python (PEARL MD 09h)** in Jupyter. Configure `INPUT_RUN`/`PROJECT_ROOT` if files move; the recorded source run is explicitly named, never chosen as the newest folder:
-
-```text
-~/Desktop/venv/outputs/pipeline_5_pharmacophore_09h_mol00583_md/
-20260912T174721_843455Z_seed20260912/
-```
-
-Required files within that run:
-
-```text
-09i_manifest.json
-09h_summary.json
-provenance.json
-tables/09h_QC.csv
-tables/solute_atom_map.csv
-tables/solute_bonds.json
-states/physical_system.xml
-structures/solvated.pdb
-trajectories/production_solute.dcd
-inputs/ligand_openff.json
-```
-
-1. `RUN_ENERGY=False`: input preflight with an intentional stop.
-2. `RUN_ENERGY=True`, `FAST_TEST_MODE=True`: three snapshots at 202, 600 and 1,000 ps for a technical test.
-3. `RUN_ENERGY=True`, `FAST_TEST_MODE=False`: 50 snapshots uniformly distributed over 202–1,000 ps, after excluding the first 20% of production.
-
-Restart the kernel and run all cells after changing settings. Save executed TEST=True/TEST=False copies. Each snapshot prints progress and estimated remaining time and updates its CSV. There is no automatic resume; a fresh execution creates a new folder.
-
-### Recorded results
-
-| Mode | Snapshots | Mean endpoint (kcal/mol) | SD across snapshots (kcal/mol) | Technical QC |
-|---|---:|---:|---:|---|
-| Test | 3 | −21.25 | 1.90 | Passed |
-| Production | 50 | **−20.10** | **2.37** | Passed |
-
-Use the **50-snapshot production result** in the report. The test documents execution, not independent validation. The independent MM check differed by approximately 1.1 × 10⁻⁹ kJ/mol; all requested frames, finite energies and component-sum checks passed.
-
-| Production component | Mean (kcal/mol) |
-|---|---:|
-| Direct Coulomb | −14.29 |
-| van der Waals | −33.96 |
-| GB polar solvation | +36.67 |
-| ACE surface term | −8.52 |
-| Total endpoint proxy | **−20.10** |
-
-The first/second analyzed halves average −21.42/−18.79 kcal/mol. Five consecutive ten-snapshot blocks average −21.21, −21.74, −20.36, −18.67 and −18.53 kcal/mol. Later values are less favorable within this model; convergence is not established. These observations accompany contact reorganization in 09h and do not by themselves demonstrate dissociation.
-
-The SD describes correlated snapshots, not uncertainty of the mean. The estimate omits entropy, independent-component relaxation, replicas and experimental calibration; it is not rigorous binding ΔG, Kd/Ki or evidence of inhibition. A negative value alone does not establish binding.
-
-### Outputs
-
-Unique run folders under `outputs/pipeline_5_pharmacophore_09i_mol00583_endpoint/` contain `09i_summary.json`, `09i_report.md`, `provenance.json`, parameter/system exports, QC and hashes, plus:
-
-```text
-tables/endpoint_per_frame_kcal_mol.csv
-tables/energy_summary.csv
-tables/selected_frames.csv
-tables/temporal_blocks.csv
-tables/MM_validation.json
-tables/09i_QC.csv
-plots/09i_endpoint.png
-plots/09i_blocks.png
-```
-
-Recorded runs:
-
-```text
-test:       20260913T104032_858892Z_test
-production: 20260913T104616_464776Z_production
-```
-
-### Figures for the report
-
-Use production outputs, not test screenshots. `09i_endpoint.png` shows 50 endpoint values and their mean component contributions; `09i_blocks.png` is a supplementary temporal diagnostic, not proof of convergence. The separate ChimeraX figure A–B shows the whole EGFR model and initial/final ligand poses after receptor alignment. The four labeled residues are selected by proximity in the final snapshot, not by contact persistence. Structural rendering does not replace trajectory analysis. A trajectory movie is optional presentation material.
-
----
-
-## 09j — MOL00583 free in water, Windows/CUDA
-
-09j is a post-selection control experiment designed to characterize **MOL00583 in the unbound state** under explicit-solvent molecular dynamics and compare its conformational behavior with the ligand extracted from the bound 09h trajectory.
-
-The notebook is intended for Windows/CUDA execution and is packaged under:
-
-```text
-C:\Users\Roberto\PEARL\PEARL_09j\
-```
-
-with the notebook:
-
-```text
-09j_MOL00583_Free_Water_MD_Comparison.ipynb
-```
-
-Use the Jupyter kernel:
-
-```text
-Python (PEARL GPU)
-```
-
-### Scientific purpose
-
-09j does **not** estimate binding affinity and does not replace 09h or 09i. It addresses a different question:
-
-```text
-How does MOL00583 behave when free in water,
-compared with the same neutral microstate while bound to EGFR?
-```
-
-The ligand is simulated in the **same neutral microstate used in 09h**. The OpenFF parameters of all 53 atoms are inherited from the 09h cache and were checked against the original system for charges, sigma and epsilon.
-
-Chemical audit information retained in the Windows package includes:
-
-```text
-formula: C22H23N5O3
-formal charge: 0
-```
-
-RDKit enumeration produced 21 candidate tautomeric forms for documentation, but these are **not** interpreted as 21 equiprobable states and no quantitative pKa or protonation-population prediction was performed.
+This is a **whole-chain/full-surface docking ranking**, not an
+EGF-interface-specific ranking. The `pose_support_score` is descriptive
+and is not a physical binding energy.
+
+### A24 --- native EGF-interface relevance
+
+A24 compared the historical selected poses with the 43 EGFR residues of
+the native EGF--EGFR interface. The selected poses of `MOL00273`,
+`MOL00583`, `MOL00600`, `MOL00053`, `MOL00489` and `MOL00294` had no
+native-interface overlap under the implemented criterion. `MOL00484` and
+`MOL00857` were site-relevant, with 5 and 6 overlapping interface
+residues respectively.
+
+Alternative site-relevant poses existed for several molecules, often
+with weaker original docking support; `MOL00600` had none among its ten
+samples. These alternatives were not automatically substituted for the
+historical selected poses.
 
 Therefore:
 
-```text
-09j = comparison conditioned on one neutral microstate
-09j ≠ constant-pH MD
-09j ≠ complete protonation-state analysis
+``` text
+historical whole-chain 09e ranking ≠ EGF-interface-specific ranking
 ```
 
-Alternative protonation/tautomeric states would require an explicitly motivated choice and new parameterization. Charges from the neutral state must not be reused for chemically different microstates.
+All eight molecules retain their original near-miss rescue provenance.
 
-### Execution modes
+------------------------------------------------------------------------
 
-Preflight:
+## 09f --- AutoDock Vina local energetic refinement
 
-```text
-RUN_MD=False
+09f applies AutoDock Vina to the four historical 09e finalists:
+`MOL00273`, `MOL00583`, `MOL00600` and `MOL00484`.
+
+It is **local rescoring/refinement of the selected DiffDock poses**, not
+a second independent global docking campaign.
+
+  Candidate     Vina before   Vina after   Δ local optimization
+  ----------- ------------- ------------ ----------------------
+  MOL00600            1.998   **-5.791**                 -7.789
+  MOL00583            0.384   **-4.314**                 -4.698
+  MOL00484           -0.556   **-4.267**                 -3.711
+  MOL00273           -2.982   **-3.937**                 -0.955
+
+### A25 --- receptor-frame displacement
+
+The historical ligand-only `GetBestRMS` quantity must not be interpreted
+as receptor-frame pose stability. A25 measured displacement in the
+receptor frame from the already generated structures:
+
+  Candidate     receptor-frame RMSD (Å)   centroid displacement (Å)
+  ----------- ------------------------- ---------------------------
+  MOL00600                        1.494                       0.384
+  MOL00583                        1.418                       0.523
+  MOL00484                        1.272                       0.612
+  MOL00273                        1.118                       0.787
+
+These values support only **limited local rearrangement during
+refinement**. They do not establish binding-site stability. In
+particular, A24 had already shown that the historical MOL00583 pose
+refined here is off-site relative to the native EGF interface. Among
+these four original inputs, `MOL00484` retains native-interface
+relevance.
+
+Vina scores remain empirical within-protocol scores; they are not
+rigorous binding free energies.
+
+------------------------------------------------------------------------
+
+## 09g --- Integrated lead selection
+
+09g historically combined six computational criteria: pharmacophore fit,
+chemistry/drug-likeness, DiffDock structural support, receptor
+engagement, Vina energetic support and a local-geometry metric.
+
+These are **not six independent evidence streams**. Several derive from
+the same candidate structures, docking poses or related scoring chain.
+The top-2 support count is retained as provenance of the implemented
+prioritization rule.
+
+### Historical 09g ranking
+
+    Historical rank Candidate   Historical label     Top-2 support
+  ----------------- ----------- ------------------ ---------------
+                  1 MOL00583    TIER 1                       4 / 6
+                  2 MOL00484    TIER 2                       3 / 6
+                  3 MOL00600    TIER 2                       3 / 6
+                  4 MOL00273    TIER 2                       2 / 6
+
+### A26 --- revised evidence interpretation
+
+`MOL00583` remains the **historical computational lead selected by
+09g**, but its propagated 09e/09f pose is off-site and requires
+site-relevant structural reassessment. `MOL00484` retains an
+EGF-interface-relevant selected pose and therefore retains site-relevant
+structural support for follow-up. `MOL00600` and `MOL00273` have
+off-site historical selected poses.
+
+A26 does **not** automatically rerank the finalists or promote MOL00484
+to a new primary lead. It separates the historical ranking from the
+later native-interface audit.
+
+------------------------------------------------------------------------
+
+## 09h --- MOL00583--EGFR molecular-dynamics validation
+
+09h follows the historical 09g choice and starts from the Vina-refined
+MOL00583 pose exported by 09f. The receptor is extracellular EGFR chain
+B from 3NJP.
+
+The 1 ns production run remains a valid simulation of the configuration
+that was actually prepared. Historical local metrics (including
+approximately 2.09 Å mean ligand heavy-atom RMSD and 100% retention by
+the notebook's local-region criterion) refer to the region surrounding
+the propagated 09f pose; they must not be equated with the native EGF
+interface.
+
+### A26b --- native EGF-interface check
+
+A26b reanalyzed the existing production trajectory without rerunning MD.
+All 43 native-interface residues were mapped. After discarding the first
+20%, 400 frames were analyzed:
+
+``` text
+EGF-interface contact fraction = 0.000000
+minimum ligand–interface distance = 9.167 Å
+mean minimum distance = 11.382 Å
+median minimum distance = 11.386 Å
+native-interface residues contacted = 0
 ```
 
-The notebook checks inputs and intentionally stops after the preflight.
+Thus 09h supports persistence/reorganization in the **original off-site
+EGFR region**, not retention at the native EGF--EGFR interface. This
+does not exclude other possible MOL00583 binding modes; it means this
+specific trajectory provides no evidence for native EGF-interface
+binding.
 
-Technical test:
+------------------------------------------------------------------------
 
-```text
-RUN_MD=True
-FAST_TEST_MODE=True
+## 09i --- MOL00583--EGFR endpoint energetics
+
+09i analyzes snapshots from the **1 ns 09h production trajectory** with
+a single-trajectory GBn2/ACE endpoint protocol.
+
+The 50-snapshot production result is approximately:
+
+``` text
+mean endpoint proxy = -20.10 kcal/mol
+SD across snapshots = 2.37 kcal/mol
 ```
 
-Protocol:
+The SD describes variation across correlated snapshots, not uncertainty
+of the mean. The calculation omits entropy, independent-component
+relaxation, replicas and experimental calibration. It is not rigorous
+binding ΔG and cannot be converted into Kd, Ki or evidence of
+inhibition.
 
-```text
-10 ps NVT
-10 ps NPT
-50 ps production
+### Interpretation after A26b
+
+Because A26b establishes that the analyzed 09h trajectory is outside the
+native EGF interface, the 09i endpoint value characterizes the
+**simulated off-site EGFR--MOL00583 configuration**. It must not be
+presented as an energetic estimate of MOL00583 binding to the native EGF
+site.
+
+The saved calculation remains an internally consistent characterization
+of the configuration actually simulated; the correction concerns its
+biological/site interpretation.
+
+------------------------------------------------------------------------
+
+## 09j --- MOL00583 free in water, Windows/CUDA
+
+09j characterizes the neutral MOL00583 microstate **free in water** with
+Windows/CUDA replicate MD. The production configuration uses three
+stochastic replicas up to 10 ns each, with different seeds but the same
+initial molecular geometry.
+
+The analysis includes ligand conformational RMSD, heavy-atom geometric
+radius and hydration diagnostics. It performs no ΔG, entropy or affinity
+calculation.
+
+### Interpretation after A24--A26b
+
+The free-water simulations remain valid as conformational/hydration
+characterization. However, the historical `free` versus `bound`
+comparison must be interpreted carefully: the 09h comparator is the
+**EGFR-associated off-site configuration** identified by A26b, not a
+validated EGF-interface-bound state.
+
+``` text
+09j free state = MOL00583 in water
+historical "bound" reference = simulated off-site EGFR–MOL00583 configuration
+free-versus-bound comparison ≠ thermodynamic EGF-site binding analysis
 ```
 
-Extended mode:
+------------------------------------------------------------------------
 
-```text
-RUN_MD=True
-FAST_TEST_MODE=False
-```
+## 09k --- MOL00583--EGFR bound-complex replicas on Windows/CUDA
 
-For each of three sequential replicas:
+09k extends the EGFR--MOL00583 configuration inherited from 09h on
+Windows/CUDA.
 
-```text
-100 ps NVT
-200 ps NPT
-10 ns production
-```
+Production:
 
-The three replicas use different seeds but share the same initial molecular geometry. They are therefore stochastic replicas, not independently prepared chemical microstates.
-
-### Analyses
-
-09j evaluates:
-
-- ligand conformational RMSD after fitting the ligand to itself;
-- heavy-atom geometric radius;
-- per-replica distributions;
-- comparison with MOL00583 coordinates extracted from the bound 09h trajectory;
-- water-oxygen counts within 3.5 Å of the ligand.
-
-The water counts are geometric hydration diagnostics and **not** hydrogen-bond counts.
-
-The first 20% of each production trajectory is discarded for the comparative analyses.
-
-The free-ligand RMSD used here is not the same quantity as the ligand RMSD after EGFR alignment used for binding-site retention in 09h.
-
-### Outputs
-
-New runs are written under:
-
-```text
-C:\Users\Roberto\PEARL\outputs\pipeline_5_09j_free_ligand\
-```
-
-Each replica can store:
-
-```text
-solvated PDB
-OpenMM system/state XML
-checkpoint
-simulation log
-ligand DCD
-hydration counts
-summary/QC outputs
-```
-
-Saving the full solvent DCD is optional and disabled by default to reduce storage.
-
-### Interpretation boundary
-
-09j performs no ΔG, entropy or affinity calculation. Energies of different simulation boxes must not be directly subtracted.
-
-Different seeds do not guarantee convergence, and all replicas share the same initial ligand geometry. A stronger comparison requires adequate bound-state replicas, convergence checks and explicit consideration of alternative microstates.
-
-A short local CPU execution was used to verify code execution, preparation, export and analysis. This technical verification is **not** a scientific result. Windows/CUDA production results must only be reported once the corresponding CUDA runs and QC outputs have actually completed.
-
----
-
-## 09k — MOL00583–EGFR bound-complex replicas on Windows/CUDA
-
-09k extends the original 1 ns 09h simulation by running **multiple longer replicas of the bound MOL00583–EGFR complex** on the Windows workstation with the NVIDIA RTX 4090.
-
-It reuses the portable 09h system and the same neutral MOL00583 microstate.
-
-Use:
-
-```text
-C:\Users\Roberto\PEARL
-```
-
-and the Jupyter kernel:
-
-```text
-Python (PEARL GPU)
-```
-
-### Scientific purpose
-
-The original 09h result is based on a single 1 ns production trajectory. 09k addresses the need for broader dynamic sampling by creating multiple stochastic branches from the same equilibrated/bound structural state.
-
-The workflow is:
-
-```text
-09h 1 ns bound endpoint
-        ↓
-same physical system / same neutral ligand microstate
-        ↓
-new velocities + different seeds
-        ↓
-three longer bound replicas
-```
-
-These simulations are **not three independently prepared structures**. They start from the same 09h endpoint and therefore test stochastic robustness around a shared structural starting point.
-
-They must not be presented as automatic proof of convergence.
-
-### Execution modes
-
-Technical test:
-
-```text
-RUN_MD=True
-FAST_TEST_MODE=True
-```
-
-This runs one 50 ps production replica after 10 ps NPT.
-
-Extended production:
-
-```text
-RUN_MD=True
-FAST_TEST_MODE=False
-```
-
-Production protocol:
-
-```text
+``` text
 3 replicas
 10 ns production / replica
 100 ps NPT before each production
-new velocities and distinct seeds
+distinct seeds / new velocities
+shared 09h structural starting point
 ```
 
-The RTX 4090 benchmark estimated approximately seven hours for production dynamics alone; equilibration, trajectory writing and analysis add further time.
+The replicas are stochastic branches from one starting configuration,
+not independently prepared binding poses. Historical local-region
+metrics describe motion relative to the residues neighboring the initial
+09h/09f pose, which is now known to be off-site.
 
-Do not run another MD notebook concurrently on the same GPU.
+### A26c --- native EGF-interface relevance
 
-### Starting state and portability
+A26c analyzed only the already existing 09k trajectories; **no MD,
+docking or Vina calculation was rerun**. After discarding the first 20%,
+800 frames per replica were analyzed, for 2400 frames total.
 
-The Windows package contains the parametrized 09h system and portable XML states, including:
+  -----------------------------------------------------------------------------
+  Replica         Frames   EGF-interface Min distance     Mean min    Interface
+                                 contact          (Å) distance (Å)     residues
+                                fraction                              contacted
+  --------- ------------ --------------- ------------ ------------ ------------
+  1                  800        0.000000        9.040       13.174            0
 
-```text
-production_system.xml
-production_integrator.xml
-equilibrated.xml
-production_final.xml
-physical_system.xml
+  2                  800        0.000000        7.733       13.159            0
+
+  3                  800        0.000000        9.796       13.579            0
+  -----------------------------------------------------------------------------
+
+No native EGF-interface contact was observed in **0/2400 analyzed
+frames**. Even the closest approach (7.733 Å) remained above the 4.5 Å
+A26c contact cutoff.
+
+Therefore, the 09k simulations support persistence/evolution of the
+previously identified **off-site EGFR--MOL00583 configuration**, rather
+than retention at or spontaneous migration to the native EGF interface
+during these simulations.
+
+A26c outputs are preserved in the production run:
+
+``` text
+09k_A26c_EGF_interface_replica_summary.csv
+09k_A26c_EGF_interface_framewise.csv
+09k_A26c_EGF_interface_residue_occupancy.csv
 ```
 
-The source 09h production run is the 1000 ps run, not the 50 ps test.
+The historical `TIER_1_PRIMARY_COMPUTATIONAL_LEAD` label is retained
+only as provenance of the original 09g decision.
 
-The XML states transfer coordinates, velocities and periodic box information, but they do not guarantee a bitwise-identical stochastic continuation across platforms. Mac binary checkpoints were not transferred.
-
-All starting-state choices and random seeds must remain documented.
-
-### Analyses
-
-09k stores and compares:
-
-- ligand conformational RMSD;
-- ligand RMSD after EGFR-based alignment where appropriate;
-- geometric radius on ligand heavy atoms;
-- ligand/site distance diagnostics;
-- receptor–ligand heavy-atom contacts;
-- local receptor Cα RMSF;
-- retention-related geometric metrics;
-- per-replica summaries and QC.
-
-For direct comparison with 09j, the first 20% of production is discarded.
-
-Heavy-atom contacts use a 4 Å cutoff in the 09j/09k comparative analysis. Local RMSF focuses on receptor residues initially within 5 Å of the ligand.
-
-The fraction within 8 Å of the center of the initially neighboring receptor residues is only a geometric diagnostic and must be interpreted together with distance, RMSD and contact metrics.
-
-09k does not include hydrogen-bond analysis or protonation-population analysis.
-
-### Outputs
-
-Runs are written under:
-
-```text
-outputs/pipeline_5_09k_bound_replicates/
-```
-
-Each replica stores:
-
-```text
-system/integrator XML
-states
-checkpoint
-solute DCD
-simulation log
-metrics
-contact tables
-local RMSF outputs
-summary/QC files
-```
-
-The original 09h topology, atom ordering and parameters must be retained because they are required for downstream energetic analysis.
-
-The old 09i notebook does not automatically consume 09k replicas. Any replica-based endpoint energetic analysis requires an explicitly adapted reader and harmonized protocol.
-
-### Technical validation and interpretation boundary
-
-A minimal local CPU execution using the real system completed preparation, short equilibration, production, export and analysis with technical QC passed. This only validates code execution.
-
-The full CUDA production must be judged from the Windows notebook outputs and QC files when completed.
-
-As in 09j:
-
-```text
-different seeds ≠ proof of convergence
-neutral microstate ≠ physiological protonation proof
-MD stability ≠ binding affinity
-```
-
-MOL00583 remains:
-
-```text
-TIER_1_PRIMARY_COMPUTATIONAL_LEAD
-```
-
-and is not experimentally validated.
-
-
----
+------------------------------------------------------------------------
 
 ## Pipeline 5 funnel
 
-```text
-09a
-17 core consensus pharmacophore features
-        ↓
-09b
-10 consolidated groups
-5 mandatory + 4 optional + 1 contextual
-        ↓
-09c
-1000 molecules analyzed
-996 embedded
-83 complete mandatory assignments
-2 strict pharmacophore hits
-        ↓
-09d
-0 strict hits chemically eligible
-8 CHEM_PASS near-miss rescue candidates
-        ↓
-09e
-8 candidates × 10 DiffDock poses
-80 poses analyzed
-        ↓
-09f
-top 4 locally re-scored/refined with Vina
-        ↓
-09g
-MOL00583 primary computational lead
-MOL00484 / MOL00600 / MOL00273 orthogonal follow-up leads
-        ↓
-09h
-MOL00583–EGFR MD: 50 ps test and 1 ns production
-        ↓
-09i
-GBn2/ACE endpoint: 3-snapshot test and 50-snapshot analysis
-        ↓
-Windows/CUDA follow-up
-        ├── 09j  MOL00583 free in water
-        │        technical test → planned/recorded replicated production as documented
-        │
-        └── 09k  MOL00583–EGFR bound replicas
-                 technical test → 3 × 10 ns CUDA production protocol
+``` text
+09a  MD-derived pharmacophore extraction
+ ↓
+09b  consolidated screening model
+ ↓
+09c  REINVENT4 generation/acquisition + downstream pharmacophore screening
+ ↓
+09d  chemistry filtering
+ ↓
+09e  whole-chain DiffDock ranking
+ ↓
+A24  native EGF-interface relevance check
+ ↓
+09f  local Vina refinement
+ ↓
+A25  receptor-frame displacement check
+ ↓
+09g  historical multi-criterion ranking
+ ↓
+A26  revised evidence interpretation
+ ↓
+09h  1 ns MD of historical MOL00583 configuration
+ ↓
+A26b 0/400 frames contact native EGF interface
+ ↓
+09i  endpoint characterization of that off-site trajectory
+ ↓
+09j  free MOL00583 replicas
+ ↓
+09k  3 × 10 ns EGFR–MOL00583 replicas
+ ↓
+A26c 0/2400 frames contact native EGF interface
 ```
 
----
+The audit preserves the historical 09g ranking but separates it from
+native-interface validation. MOL00583 remains the historical lead;
+MOL00484 retains site-relevant structural support for follow-up. No
+automatic reranking is imposed.
+
+------------------------------------------------------------------------
 
 ## Software and environments
 
@@ -971,7 +673,7 @@ Windows/CUDA follow-up
 
 Typical Python requirements include:
 
-```text
+``` text
 numpy
 pandas
 matplotlib
@@ -981,24 +683,31 @@ MDAnalysis
 BioPython
 ```
 
-Stages 09h–09i use the dedicated environment below, in addition to the upstream structural-bioinformatics tools.
+Stages 09h--09i use the dedicated environment below, in addition to the
+upstream structural-bioinformatics tools.
 
-### OpenMM / 09h–09i Jupyter environment
+### OpenMM / 09h--09i Jupyter environment
 
-The verified kernel is **Python (PEARL MD 09h)**, Conda environment `pearl-09h`. If it already exists, reuse it. To create it on a compatible Conda platform, run these once in Terminal:
+The verified kernel is **Python (PEARL MD 09h)**, Conda environment
+`pearl-09h`. If it already exists, reuse it. To create it on a
+compatible Conda platform, run these once in Terminal:
 
-```bash
+``` bash
 conda create -n pearl-09h -c conda-forge python=3.11 openmm pdbfixer mdtraj openff-toolkit openff-forcefields openmmforcefields ambertools rdkit numpy pandas matplotlib jupyterlab ipykernel
 conda activate pearl-09h
 python -m ipykernel install --user --name pearl-09h --display-name "Python (PEARL MD 09h)"
 jupyter lab
 ```
 
-Select that kernel **inside Jupyter**; activating an environment in Terminal alone does not switch an existing notebook. Package resolution is platform-dependent; actual versions and input hashes are recorded per run in `provenance.json`.
+Select that kernel **inside Jupyter**; activating an environment in
+Terminal alone does not switch an existing notebook. Package resolution
+is platform-dependent; actual versions and input hashes are recorded per
+run in `provenance.json`.
 
-If AmberTools is installed but OpenFF cannot find `antechamber`, keep this cell before 09h ligand parameterization:
+If AmberTools is installed but OpenFF cannot find `antechamber`, keep
+this cell before 09h ligand parameterization:
 
-```python
+``` python
 import os, sys, shutil
 from pathlib import Path
 kernel_bin = str(Path(sys.executable).parent)
@@ -1010,39 +719,50 @@ print("sqm:", shutil.which("sqm"))
 print("AmberTools available:", AmberToolsToolkitWrapper.is_available())
 ```
 
-This corrects executable discovery; it does not install missing software. 09i reuses saved charges and does not invoke AmberTools.
+This corrects executable discovery; it does not install missing
+software. 09i reuses saved charges and does not invoke AmberTools.
 
-Use `PLATFORM="CPU"` for the verified Mac setup. The OpenCL plugin was present but device initialization returned `No compatible OpenCL platform is available`; changing the platform string alone does not enable a GPU. 09i defaults to `CPU_THREADS=4`. For another machine, test GPU context creation before running a full calculation.
+Use `PLATFORM="CPU"` for the verified Mac setup. The OpenCL plugin was
+present but device initialization returned
+`No compatible OpenCL platform is available`; changing the platform
+string alone does not enable a GPU. 09i defaults to `CPU_THREADS=4`. For
+another machine, test GPU context creation before running a full
+calculation.
 
-### Windows / CUDA environment for 09j–09k
+### Windows / CUDA environment for 09j--09k
 
 The portable Windows project root is:
 
-```text
+``` text
 C:\Users\Roberto\PEARL
 ```
 
 The Windows follow-up notebooks are intended to use:
 
-```text
+``` text
 OS: Windows
 GPU: NVIDIA RTX 4090
 Jupyter kernel: Python (PEARL GPU)
 ```
 
-The portable package includes selected 09f/09g inputs plus the parametrized 09h system, portable XML states and the solute trajectory needed for downstream analysis. It does not automatically install software or reproduce every file from the Mac environment.
+The portable package includes selected 09f/09g inputs plus the
+parametrized 09h system, portable XML states and the solute trajectory
+needed for downstream analysis. It does not automatically install
+software or reproduce every file from the Mac environment.
 
 Before a Windows run:
 
-1. extract the portable package without creating a nested second `PEARL` directory;
-2. verify all transferred files against `MANIFEST_SHA256.json`;
-3. point notebook `PROJECT_ROOT` to `Path(r"C:\Users\Roberto\PEARL")`;
-4. verify NVIDIA driver, CUDA-enabled OpenMM context and the `Python (PEARL GPU)` kernel before running production;
-5. do not regenerate ligand chemistry unless explicitly required.
+1.  extract the portable package without creating a nested second
+    `PEARL` directory;
+2.  verify all transferred files against `MANIFEST_SHA256.json`;
+3.  point notebook `PROJECT_ROOT` to `Path(r"C:\Users\Roberto\PEARL")`;
+4.  verify NVIDIA driver, CUDA-enabled OpenMM context and the
+    `Python (PEARL GPU)` kernel before running production;
+5.  do not regenerate ligand chemistry unless explicitly required.
 
 The portable 09h state files include:
 
-```text
+``` text
 production_system.xml
 production_integrator.xml
 equilibrated.xml
@@ -1050,16 +770,23 @@ production_final.xml
 physical_system.xml
 ```
 
-The package preserves the 09h system and the neutral MOL00583 microstate. Binary Mac checkpoints were not transferred. XML portability does not imply bitwise-identical stochastic continuation.
+The package preserves the 09h system and the neutral MOL00583
+microstate. Binary Mac checkpoints were not transferred. XML portability
+does not imply bitwise-identical stochastic continuation.
 
-09j and 09k are designed so that the existing parametrized system can be reused without requiring AmberTools/OpenFF/RDKit for the basic Windows production benchmark, provided the transferred hashes and chemistry audit pass.
-
+09j and 09k are designed so that the existing parametrized system can be
+reused without requiring AmberTools/OpenFF/RDKit for the basic Windows
+production benchmark, provided the transferred hashes and chemistry
+audit pass.
 
 ### REINVENT4
 
-REINVENT4 was run in a separate environment and its generated SMILES were imported into 09c.
+REINVENT4 was run in a separate environment and its generated SMILES
+were imported into 09c.
 
-The production sampling configuration used the PubChem prior and requested 5000 unique molecules, with 1000 molecules subsequently analyzed in 09c.
+The production sampling configuration used the PubChem prior and
+requested 5000 unique molecules, with 1000 molecules subsequently
+analyzed in 09c.
 
 ### DiffDock
 
@@ -1067,7 +794,7 @@ DiffDock was run in a dedicated environment.
 
 The Apple-Silicon setup used during this project included:
 
-```text
+``` text
 Python 3.10
 PyTorch 2.5.1
 torch-geometric
@@ -1081,40 +808,42 @@ RDKit
 
 DiffDock was executed on CPU on macOS for compatibility.
 
-The first run may download the ESM2 model and generate SO(2)/SO(3) lookup tables.
+The first run may download the ESM2 model and generate SO(2)/SO(3)
+lookup tables.
 
 ### AutoDock Vina / Meeko
 
 A separate Conda environment was used:
 
-```bash
+``` bash
 conda create -n pearl-vina python=3.10 -y
 conda activate pearl-vina
 conda install -c conda-forge vina meeko rdkit pandas numpy scipy gemmi -y
 ```
 
-For receptor preparation, PDB 3NJP chain-B residue 172 contains two alternate conformations with equal occupancy:
+For receptor preparation, PDB 3NJP chain-B residue 172 contains two
+alternate conformations with equal occupancy:
 
-```text
+``` text
 B:172 altloc A = 0.50
 B:172 altloc B = 0.50
 ```
 
 The production protocol deterministically selected:
 
-```text
+``` text
 B:172=A
 ```
 
 during Meeko receptor preparation.
 
----
+------------------------------------------------------------------------
 
 ## Suggested execution order
 
 The notebooks should be run sequentially:
 
-```text
+``` text
 09a
  ↓
 09b
@@ -1138,25 +867,30 @@ post-selection Windows/CUDA follow-up
  └── 09k  bound MOL00583–EGFR replicas
 ```
 
-Several stages depend on files exported by the previous notebook, so the `outputs/` directory should be preserved between runs. For 09j–09k, also preserve the transferred 09h topology, atom ordering, parameter cache and XML states because these define the chemistry and system identity used for the Windows follow-up.
+Several stages depend on files exported by the previous notebook, so the
+`outputs/` directory should be preserved between runs. For 09j--09k,
+also preserve the transferred 09h topology, atom ordering, parameter
+cache and XML states because these define the chemistry and system
+identity used for the Windows follow-up.
 
 09c, 09e and 09f contain external-tool stages:
 
-```text
+``` text
 09c → REINVENT4 sampling
 09e → DiffDock inference
 09f → AutoDock Vina / Meeko
 ```
 
-The corresponding notebook prepares the external input files and then re-imports the generated results for analysis.
+The corresponding notebook prepares the external input files and then
+re-imports the generated results for analysis.
 
----
+------------------------------------------------------------------------
 
 ## Output directories
 
 The main output roots are:
 
-```text
+``` text
 outputs/
 ├── pipeline_5_pharmacophore_09a_...
 ├── pipeline_5_pharmacophore_09b_consolidated/
@@ -1177,7 +911,7 @@ outputs/
 
 Each notebook writes some combination of:
 
-```text
+``` text
 tables/
 plots/
 structures/
@@ -1187,83 +921,109 @@ inputs/
 
 The final integrated table is:
 
-```text
+``` text
 outputs/pipeline_5_pharmacophore_09g_integrated_lead_selection/
 tables/09g_integrated_lead_priority.csv
 ```
 
 The 09g lead-selection report is:
 
-```text
+``` text
 outputs/pipeline_5_pharmacophore_09g_integrated_lead_selection/
 reports/09g_pipeline5_final_report.md
 ```
 
----
+------------------------------------------------------------------------
 
 ## Scientific caveats
 
-Pipeline 5 is a **computational prototype** and its output should be interpreted accordingly.
+Pipeline 5 is a **computational prototype**.
 
-1. The current REINVENT4 production run is unconstrained molecular sampling followed by pharmacophore screening; it is not pharmacophore-conditioned RL generation.
-2. The two strict pharmacophore hits failed downstream chemistry criteria, so the final docking panel consists of chemically acceptable pharmacophore near-misses.
-3. DiffDock confidence is not an affinity or free-energy estimate.
-4. The 09e `pose_support_score` is a descriptive composite for pose selection, not a physical energy.
-5. Vina scores are empirical docking scores and are not rigorous binding free energies.
-6. 09f remains a Vina scoring/refinement stage. Endpoint MM/GBSA-like analysis is implemented separately in **09i** after 09h; it is not a rigorous binding free-energy calculation.
-7. The final 09g priority is based on cross-method rank convergence rather than an artificial sum of incompatible raw scores.
-8. `MOL00583` is therefore a **primary computational lead for follow-up**, not an experimentally validated EGFR inhibitor.
-9. 09h retention and 09i negative endpoint values are preliminary, model-dependent evidence. One 1 ns trajectory does not establish convergence; the observed temporal changes must be reported.
-10. Experimental binding, functional and selectivity assays would be required to establish biological activity.
-11. 09j studies only the neutral MOL00583 microstate inherited from 09h; it does not provide a quantitative pKa/protonation-state population model and is not constant-pH MD.
-12. The 09j free-ligand and 09k bound-complex replicas use different systems and must not be interpreted by subtracting total box energies.
-13. The three 09k replicas are stochastic branches from the same 09h endpoint with new velocities/seeds, not three independently prepared structures; different seeds alone do not establish convergence.
-14. Windows/CUDA technical-test success demonstrates code/platform execution only. Scientific conclusions should use completed production runs with QC and explicit convergence assessment.
+1.  REINVENT4 production is unconstrained molecular sampling followed by
+    pharmacophore screening, not pharmacophore-conditioned RL.
+2.  The strict pharmacophore hits failed chemistry filters; the docking
+    panel consists of chemically acceptable near-misses.
+3.  09e is whole-chain/full-surface docking; its historical ranking is
+    not an EGF-interface ranking.
+4.  A24 shows that the selected MOL00583 pose is off-site; MOL00484
+    retains native-interface relevance among the four historical 09f
+    finalists.
+5.  09f is local Vina rescoring/refinement, not an independent global
+    docking experiment.
+6.  A25 receptor-frame displacement indicates limited local
+    rearrangement, not binding-site stability.
+7.  The six 09g criteria are partially dependent computational criteria,
+    not six independent biological evidence streams.
+8.  MOL00583 remains the **historical 09g lead**, not a validated native
+    EGF-site lead.
+9.  A26b: 0/400 analyzed 09h frames contact the native EGF interface.
+10. 09i (\~-20.10 kcal/mol) characterizes the off-site 09h
+    configuration; it is not rigorous ΔG, Kd, Ki or proof of inhibition.
+11. 09j remains valid for free-water conformational/hydration
+    characterization, but its historical `bound` comparator is off-site.
+12. A26c: 0/2400 analyzed 09k frames contact the native EGF interface.
+13. Different seeds do not establish convergence; the 09k replicas share
+    one structural starting point.
+14. Historical outputs and provenance labels are retained; the audit
+    corrects interpretation rather than rewriting past computations.
+15. Experimental binding, functional and selectivity assays remain
+    necessary for biological validation.
 
----
+------------------------------------------------------------------------
 
 ## Final result
 
-Pipeline 5 successfully connects MD-derived peptide information to small-molecule prioritization:
+Pipeline 5 implements a traceable computational funnel from
+peptide-derived structural information to small-molecule generation,
+screening, docking, local refinement and post-selection simulation. The
+audit adds a critical distinction between **historical computational
+prioritization** and **native EGF-interface relevance**.
 
-```text
-peptide MD
-→ pharmacophore
-→ molecular generation
-→ pharmacophore matching
-→ medicinal-chemistry filtering
-→ DiffDock
-→ Vina local refinement
-→ multi-criterion lead selection
-→ selected-lead MD validation
-→ endpoint energetic analysis
-→ free-ligand Windows/CUDA MD
-→ longer replicated bound-complex Windows/CUDA MD
+Historical 09g ordering, preserved as provenance:
+
+``` text
+1. MOL00583  — historical 09g computational lead
+2. MOL00484  — historical follow-up finalist
+3. MOL00600  — historical follow-up finalist
+4. MOL00273  — historical follow-up finalist
 ```
 
-The 09g computational priority is preserved after 09h–09i and through the 09j–09k follow-up design (no comparative reranking of the four finalists is performed):
+This is **not** a post-audit EGF-site ranking. A24 shows that the
+selected MOL00583 pose is off-site, whereas MOL00484 retains a selected
+pose relevant to the native EGF interface. A26 therefore supports
+site-focused reassessment rather than automatic reranking.
 
-```text
-1. MOL00583  — primary computational lead
-2. MOL00484  — orthogonal follow-up lead
-3. MOL00600  — orthogonal follow-up lead
-4. MOL00273  — orthogonal follow-up lead
+The downstream audit is consistent:
+
+``` text
+09h / A26b: 0/400 analyzed frames contact the native EGF interface
+09k / A26c: 0/2400 analyzed frames contact the native EGF interface
 ```
 
-The most important conclusion is not that all scoring methods agree, but that the pipeline explicitly preserves their **convergence and disagreement** and uses those differences as part of the final scientific interpretation. The Windows/CUDA 09j–09k extensions add free-versus-bound and replicate-level dynamical context, but they do not convert computational prioritization into experimental validation.
+Thus 09h--09k characterize an **off-site EGFR--MOL00583 configuration**.
+The simulations and endpoint calculations remain valid records of the
+configuration actually studied, but they do not validate MOL00583
+binding at the native EGF--EGFR interface.
 
----
+The final interpretation explicitly separates pharmacophore provenance,
+chemistry eligibility, whole-chain docking support, local refinement,
+historical prioritization, native-interface relevance, dynamic
+persistence, endpoint energetics and future experimental validation.
+
+------------------------------------------------------------------------
 
 ## Project
 
-**PEARL — Peptide Extraction and AI-guided Refinement for Ligand design**
+**PEARL --- Peptide Extraction and AI-guided Refinement for Ligand
+design**
 
 Target system:
 
-```text
+``` text
 EGFR extracellular domain
 PDB: 3NJP, receptor chain B
 Upstream peptide source: EGF chain D interacting with EGFR chain B
 ```
 
-This repository contains a research/educational computational workflow. It is not intended for clinical use.
+This repository contains a research/educational computational workflow.
+It is not intended for clinical use.
