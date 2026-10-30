@@ -1,5 +1,4 @@
-PEARL Pipeline 5 --- Pharmacophore, Small-Molecule Lead Discovery and
-Post-selection Validation
+# PEARL Pipeline 5 --- Pharmacophore, Small-Molecule Lead Discovery and Post-selection Validation
 
 **PEARL --- Peptide Extraction and AI-guided Refinement for Ligand
 design**\
@@ -7,7 +6,8 @@ Target: **EGFR extracellular domain, PDB 3NJP chain B**\
 Pipeline 5: **MD-derived pharmacophore → small-molecule
 generation/screening → chemistry filtering → DiffDock → Vina refinement
 → integrated lead selection → lead MD → endpoint energetics →
-Windows/CUDA free-ligand and bound-complex follow-up simulations**
+Windows/CUDA free-ligand and bound-complex follow-up simulations →
+site-relevant MOL00484 validation**
 
 ------------------------------------------------------------------------
 
@@ -50,34 +50,46 @@ MD peptide–EGFR ensembles
         ▼
 09g  Integrated cross-method lead selection
         │
-        ▼
-09h  MOL00583–EGFR molecular-dynamics follow-up
-        │
-        ▼
-09i  MOL00583–EGFR MM/GBSA-like endpoint analysis
-        │
-        ├──────────────► 09j  MOL00583 free in water
-        │                    Windows/CUDA, replicate MD
-        │
-        └──────────────► 09k  MOL00583–EGFR complex replicas
-                             Windows/CUDA, RTX 4090
+        ├─────────────────────────────────────┐
+        │                                     │
+        ▼                                     ▼
+09h  MOL00583–EGFR MD                 09l  MOL00484–EGFR MD
+        │                                  site-relevant validation
+        ▼                                     │
+09i  MOL00583 endpoint energetics              ▼
+        │                              09m  MOL00484 endpoint energetics
+        ├────────────► 09j MOL00583             │
+        │              free in water            ├────────────► 09n MOL00484
+        │                                       │              free in water
+        ▼                                       │              3 × 10 ns
+09k  MOL00583–EGFR replicas                    ▼
+     3 × 10 ns                         09o  MOL00484–EGFR replicas
+     Windows/CUDA                           3 × 10 ns, Windows/CUDA
 ```
 
-After selection in 09g, 09h and 09i evaluate the selected lead
-dynamically and energetically. The Windows/CUDA follow-up stages 09j and
-09k extend this post-selection validation by comparing the neutral
-MOL00583 microstate in free water with longer replicated simulations of
-the bound MOL00583--EGFR complex. These stages do not rerank the four
-finalists or change their pharmacophore provenance. The final result
-remains **computational prioritization with preliminary post-selection
+After selection in 09g, 09h and 09i evaluate the historical lead
+MOL00583 dynamically and energetically. The Windows/CUDA follow-up
+stages 09j and 09k extend this post-selection validation by comparing
+the neutral MOL00583 microstate in free water with longer replicated
+simulations of the EGFR-associated MOL00583 configuration.
+
+The later native-interface audit showed that the propagated MOL00583
+configuration is off-site relative to the native EGF--EGFR interface,
+whereas the historical selected pose of MOL00484 is site-relevant.
+Accordingly, 09l--09o add a second, site-focused post-selection branch
+for MOL00484. This branch performs an initial 1 ns EGFR-bound
+validation, endpoint energetic characterization, three 10 ns free-water
+replicas, and three 10 ns EGFR-bound replicas with direct
+native-interface persistence analysis.
+
+These stages do not retrospectively rerank the four 09g finalists or
+change their pharmacophore provenance. The final result remains
+**computational prioritization with post-selection structural/dynamic
 evidence**, not experimental evidence of binding.
 
-This README consolidates the operational instructions for 09a--09k.
-Recorded 09h/09i results were verified on 13 September 2026. The
-Windows/CUDA extensions 09j and 09k are documented here together with
-their stage-specific execution notes; production CUDA status must be
-interpreted exactly as reported in the corresponding notebook outputs
-and stage notes.
+This README consolidates the operational instructions for 09a--09o.
+Historical outputs and provenance are retained; later audits and
+follow-up stages refine their site-specific interpretation.
 
 ------------------------------------------------------------------------
 
@@ -106,24 +118,24 @@ and stage notes.
                                                                        synthetic accessibility 
                                                                        and diversity           
 
-  `09e_DiffDock_Docking_and_Pose_Interaction_Evaluation*.ipynb`        Dock shortlisted        Best DiffDock pose per
-                                                                       molecules and           candidate
+  `09e_DiffDock_Docking_and_Pose_Interaction_Evaluation*.ipynb`        Dock shortlisted        Best historical DiffDock
+                                                                       molecules and           pose per candidate
                                                                        characterize receptor   
                                                                        engagement              
 
   `09f_Vina_Local_Rescoring_and_Interaction_Refinement*.ipynb`         Score the selected      Comparative Vina
                                                                        DiffDock pose with Vina energetic ranking and
-                                                                       and locally optimize it local pose RMSD
+                                                                       and locally optimize it local pose diagnostics
 
-  `09g_Integrated_Pipeline5_Lead_Selection*.ipynb`                     Integrate               Final multi-criterion
-                                                                       pharmacophore,          lead priority
-                                                                       chemistry, DiffDock,    
+  `09g_Integrated_Pipeline5_Lead_Selection*.ipynb`                     Integrate               Final historical
+                                                                       pharmacophore,          multi-criterion lead
+                                                                       chemistry, DiffDock,    priority
                                                                        contacts and Vina       
                                                                        evidence                
 
   `09h_MOL00583_EGFR_MD_Validation*.ipynb`                             Validate the 09f pose   Trajectories, RMSD/RMSF,
-                                                                       of the lead selected in retention, contacts, QC
-                                                                       09g using               and 09i manifest
+                                                                       of the historical lead  retention, contacts, QC
+                                                                       selected in 09g using   and 09i manifest
                                                                        explicit-solvent MD     
 
   `09i_MOL00583_EGFR_MMGBSA_Endpoint_Analysis*.ipynb`                  Evaluate snapshots from Energy components,
@@ -134,16 +146,37 @@ and stage notes.
   `09j_MOL00583_Free_Water_MD_Comparison*.ipynb`                       Simulate the neutral    Replicate trajectories,
                                                                        MOL00583 microstate     ligand RMSD/radius
                                                                        free in water on        diagnostics, hydration
-                                                                       Windows/CUDA for        counts, QC and summary
-                                                                       conformational and      
-                                                                       hydration comparison    
-                                                                       with the bound state    
+                                                                       Windows/CUDA            counts, QC and summary
 
-  `09k_MOL00583_EGFR_Bound_Replicates*.ipynb`                          Run longer replicated   Three 10 ns bound
-                                                                       MD of the bound         replicas,
-                                                                       MOL00583--EGFR complex  contact/RMSD/RMSF
-                                                                       on Windows/CUDA / RTX   diagnostics, QC and
-                                                                       4090                    comparison-ready outputs
+  `09k_MOL00583_EGFR_Bound_Replicates*.ipynb`                          Run longer replicated   Three 10 ns replicas,
+                                                                       MD of the               contact/RMSD/RMSF
+                                                                       EGFR--MOL00583 complex  diagnostics, QC and
+                                                                       on Windows/CUDA / RTX   comparison-ready outputs
+                                                                       4090                    
+
+  `09l_MOL00484_EGFR_MD_Validation*.ipynb`                             Validate the            1 ns trajectory, RMSD,
+                                                                       site-relevant           native-interface
+                                                                       MOL00484--EGFR          distance/contact
+                                                                       configuration using     persistence and QC
+                                                                       explicit-solvent MD     
+
+  `09m_MOL00484_EGFR_MMGBSA_Endpoint_Analysis*.ipynb`                  Characterize snapshots  Endpoint energetic proxy,
+                                                                       from the 09l trajectory temporal diagnostics and
+                                                                       using endpoint          summary
+                                                                       energetics              
+
+  `09n_MOL00484_Free_Water_MD_Comparison*.ipynb`                       Simulate MOL00484 free  Three 10 ns free-ligand
+                                                                       in water using          replicas, conformational
+                                                                       replicated Windows/CUDA RMSD, geometric radius,
+                                                                       MD                      hydration diagnostics and
+                                                                                               QC
+
+  `09o_MOL00484_EGFR_CUDA_Replicates*.ipynb`                           Test reproducibility    Three 10 ns bound
+                                                                       and native-interface    replicas, 2400 analyzed
+                                                                       persistence of          frames, interface
+                                                                       EGFR--MOL00484 using    persistence, residue
+                                                                       replicated CUDA MD      occupancy and free/bound
+                                                                                               comparison
   ----------------------------------------------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------
@@ -590,17 +623,17 @@ A26c analyzed only the already existing 09k trajectories; **no MD,
 docking or Vina calculation was rerun**. After discarding the first 20%,
 800 frames per replica were analyzed, for 2400 frames total.
 
-  -----------------------------------------------------------------------------
-  Replica         Frames   EGF-interface Min distance     Mean min    Interface
-                                 contact          (Å) distance (Å)     residues
-                                fraction                              contacted
-  --------- ------------ --------------- ------------ ------------ ------------
-  1                  800        0.000000        9.040       13.174            0
+  ---------------------------------------------------------------------------
+      Replica      Frames   EGF-interface         Min    Mean min   Interface
+                                  contact    distance    distance    residues
+                                 fraction         (Å)         (Å)   contacted
+  ----------- ----------- --------------- ----------- ----------- -----------
+            1         800        0.000000       9.040      13.174           0
 
-  2                  800        0.000000        7.733       13.159            0
+            2         800        0.000000       7.733      13.159           0
 
-  3                  800        0.000000        9.796       13.579            0
-  -----------------------------------------------------------------------------
+            3         800        0.000000       9.796      13.579           0
+  ---------------------------------------------------------------------------
 
 No native EGF-interface contact was observed in **0/2400 analyzed
 frames**. Even the closest approach (7.733 Å) remained above the 4.5 Å
@@ -621,6 +654,258 @@ A26c outputs are preserved in the production run:
 
 The historical `TIER_1_PRIMARY_COMPUTATIONAL_LEAD` label is retained
 only as provenance of the original 09g decision.
+
+------------------------------------------------------------------------
+
+## 09l --- MOL00484--EGFR site-relevant molecular-dynamics validation
+
+09l starts the dedicated post-audit follow-up of `MOL00484`.
+
+Unlike the historical MOL00583 configuration propagated through
+09h--09k, the historical selected MOL00484 pose retained relevance to
+the native EGF--EGFR interface in A24. The purpose of 09l is therefore
+to test whether this site relevance persists dynamically rather than
+only in the static selected pose.
+
+The initial production run used **1 ns explicit-solvent MD** of the
+EGFR--MOL00484 complex. Native-interface relevance was evaluated
+frame-by-frame against the same **43 EGFR residues** used in the
+site-specific audit, using a **4.5 Å ligand--interface contact cutoff**.
+
+After the initial portion excluded from analysis:
+
+``` text
+native EGF-interface contact fraction = 1.000
+mean minimum ligand–interface distance = 3.222 Å
+median minimum ligand–interface distance = 3.230 Å
+global minimum ligand–interface distance = 2.668 Å
+native-interface residues contacted at least once = 9
+```
+
+Structural diagnostics included:
+
+``` text
+mean EGFR Cα RMSD = 2.523 Å
+mean ligand RMSD after receptor fitting = 6.085 Å
+```
+
+The ligand RMSD indicates rearrangement relative to the initial pose. It
+must not be interpreted in isolation as site loss. Direct site-specific
+analysis shows that MOL00484 remains in contact with the native
+EGF-interface region throughout the analyzed trajectory.
+
+Thus:
+
+``` text
+pose rearrangement ≠ native-interface loss
+```
+
+The persistent site contact observed in 09l motivated the longer
+replicated bound-complex analysis in 09o.
+
+------------------------------------------------------------------------
+
+## 09m --- MOL00484--EGFR endpoint energetics
+
+09m analyzes **50 snapshots** from the initial 09l trajectory using an
+MM/GBSA-like endpoint protocol.
+
+Production result:
+
+``` text
+mean endpoint energetic proxy = -14.249 kcal/mol
+SD across snapshots = 1.914 kcal/mol
+observed range = -17.488 to -7.911 kcal/mol
+
+first-half mean = -14.931 kcal/mol
+second-half mean = -13.567 kcal/mol
+```
+
+The result provides a within-protocol energetic characterization of the
+simulated EGFR--MOL00484 configuration and is compatible with the
+persistence observed during MD.
+
+However:
+
+``` text
+endpoint energetic proxy ≠ rigorous binding free energy
+```
+
+The value must not be interpreted as rigorous binding ΔG and cannot be
+converted into Kd, Ki or experimental evidence of affinity or
+inhibition. The energetic analysis is complementary to, and subordinate
+to, the direct structural/site-persistence evidence.
+
+------------------------------------------------------------------------
+
+## 09n --- MOL00484 free in water, Windows/CUDA
+
+09n characterizes the intrinsic conformational behavior and hydration of
+MOL00484 independently of EGFR.
+
+Production:
+
+``` text
+3 replicas
+10 ns production / replica
+distinct stochastic seeds
+20% initial trajectory excluded from analysis
+800 analyzed frames / replica
+2400 analyzed frames total
+```
+
+Mean heavy-atom conformational RMSD:
+
+``` text
+replica 1 = 1.874 Å
+replica 2 = 1.120 Å
+replica 3 = 1.314 Å
+```
+
+Across replicas:
+
+``` text
+mean conformational RMSD = 1.436 ± 0.391 Å
+mean geometric radius ≈ 4.706 Å
+```
+
+Hydration behavior was also reproducible, with approximately 18
+hydration contacts on average across the three replicas.
+
+These simulations provide the free-state reference used in the
+descriptive free/bound comparison with 09o.
+
+The RMSD quantities are self-referenced within each trajectory. They
+describe internal conformational mobility and do not constitute an
+absolute structural distance between a free-state and bound-state
+conformation.
+
+------------------------------------------------------------------------
+
+## 09o --- MOL00484--EGFR CUDA replicates and native-interface persistence
+
+09o provides the principal replicated dynamic validation of the
+site-relevant MOL00484 configuration.
+
+Production:
+
+``` text
+3 replicas
+10 ns production / replica
+30 ns total production
+distinct stochastic seeds / velocities
+20% initial trajectory excluded from analysis
+800 analyzed frames / replica
+2400 analyzed bound frames total
+```
+
+Native-interface relevance was evaluated against the same 43-residue
+EGF-interface definition and using the same **4.5 Å contact cutoff**.
+
+### Native-interface persistence
+
+The result was consistent across all three replicas:
+
+``` text
+replica 1 contact fraction = 1.000
+replica 2 contact fraction = 1.000
+replica 3 contact fraction = 1.000
+```
+
+Therefore:
+
+``` text
+native EGF-interface contact = 2400 / 2400 analyzed frames
+overall contact fraction = 1.000
+```
+
+Mean minimum ligand--interface distances:
+
+``` text
+replica 1 = 3.027 Å
+replica 2 = 3.120 Å
+replica 3 = 3.215 Å
+```
+
+Across the 2400 analyzed bound frames:
+
+``` text
+global minimum distance = 2.572 Å
+mean minimum distance = 3.121 Å
+median minimum distance = 3.110 Å
+```
+
+Native-interface residues contacted at least once:
+
+``` text
+replica 1 = 16
+replica 2 = 27
+replica 3 = 18
+```
+
+The site persistence therefore does not depend on a single invariant
+contact pattern. MOL00484 remains within the native-interface region
+while its local residue-contact network reorganizes among replicas.
+
+### Free versus EGFR-associated conformational behavior
+
+Mean conformational RMSD in the bound replicas:
+
+``` text
+replica 1 = 0.960 Å
+replica 2 = 1.408 Å
+replica 3 = 1.310 Å
+
+mean bound RMSD = 1.226 ± 0.235 Å
+```
+
+For comparison, 09n gave:
+
+``` text
+mean free RMSD = 1.436 ± 0.391 Å
+```
+
+Thus:
+
+``` text
+bound - free RMSD difference ≈ -0.210 Å
+bound / free RMSD ratio ≈ 0.85
+```
+
+Geometric-radius comparison:
+
+``` text
+free  ≈ 4.706 Å
+bound ≈ 4.667 Å
+difference ≈ -0.039 Å
+```
+
+Within the limitations of these self-referenced trajectory metrics, the
+EGFR-associated state does not show increased internal conformational
+perturbation relative to the free-water simulations.
+
+### Site-specific interpretation
+
+The central MOL00484 result is:
+
+``` text
+A24  → historical selected pose is native-interface relevant
+09l  → native-interface contact retained throughout initial validation
+09o  → 2400/2400 analyzed frames retain native-interface contact
+```
+
+This contrasts with the propagated MOL00583 configuration:
+
+``` text
+A24/A26 → historical selected MOL00583 pose is off-site
+09h/A26b → 0/400 native-interface-contact frames
+09k/A26c → 0/2400 native-interface-contact frames
+```
+
+This contrast supports a stronger **site-specific structural/dynamic**
+case for MOL00484 among the configurations actually followed. It does
+not by itself constitute a quantitative affinity comparison or
+retrospective reranking of 09g.
 
 ------------------------------------------------------------------------
 
@@ -646,24 +931,33 @@ A25  receptor-frame displacement check
 09g  historical multi-criterion ranking
  ↓
 A26  revised evidence interpretation
- ↓
-09h  1 ns MD of historical MOL00583 configuration
- ↓
-A26b 0/400 frames contact native EGF interface
- ↓
-09i  endpoint characterization of that off-site trajectory
- ↓
-09j  free MOL00583 replicas
- ↓
-09k  3 × 10 ns EGFR–MOL00583 replicas
- ↓
-A26c 0/2400 frames contact native EGF interface
+ │
+ ├──────────────────────────────────────────────────────────┐
+ │                                                          │
+ ▼                                                          ▼
+MOL00583 historical branch                         MOL00484 site-relevant branch
+ │                                                          │
+09h  1 ns MD                                         09l  1 ns MD
+ ↓                                                          ↓
+A26b 0/400 frames contact native interface          native-interface contact retained
+ │                                                          │
+09i endpoint characterization                       09m endpoint proxy
+ │                                                  -14.249 ± 1.914 kcal/mol
+09j free MOL00583 replicas                                  │
+ │                                                  09n free MOL00484
+09k 3 × 10 ns EGFR–MOL00583 replicas               3 × 10 ns
+ ↓                                                          │
+A26c 0/2400 frames contact native interface         09o 3 × 10 ns EGFR–MOL00484
+                                                            ↓
+                                                   2400/2400 analyzed frames
+                                                   contact native EGF interface
 ```
 
 The audit preserves the historical 09g ranking but separates it from
-native-interface validation. MOL00583 remains the historical lead;
-MOL00484 retains site-relevant structural support for follow-up. No
-automatic reranking is imposed.
+native-interface validation. MOL00583 remains the historical lead.
+MOL00484 now has replicated dynamic evidence supporting persistence in
+the native EGF-interface region under the implemented simulation
+protocol. No automatic reranking is imposed.
 
 ------------------------------------------------------------------------
 
@@ -683,8 +977,9 @@ MDAnalysis
 BioPython
 ```
 
-Stages 09h--09i use the dedicated environment below, in addition to the
-upstream structural-bioinformatics tools.
+Stages 09h--09i and the MOL00484 follow-up use dedicated MD/analysis
+environments in addition to the upstream structural-bioinformatics
+tools.
 
 ### OpenMM / 09h--09i Jupyter environment
 
@@ -705,7 +1000,7 @@ is platform-dependent; actual versions and input hashes are recorded per
 run in `provenance.json`.
 
 If AmberTools is installed but OpenFF cannot find `antechamber`, keep
-this cell before 09h ligand parameterization:
+this cell before ligand parameterization where required:
 
 ``` python
 import os, sys, shutil
@@ -720,16 +1015,16 @@ print("AmberTools available:", AmberToolsToolkitWrapper.is_available())
 ```
 
 This corrects executable discovery; it does not install missing
-software. 09i reuses saved charges and does not invoke AmberTools.
+software. Endpoint-analysis stages reuse the prepared chemistry where
+specified by the corresponding notebook.
 
 Use `PLATFORM="CPU"` for the verified Mac setup. The OpenCL plugin was
 present but device initialization returned
 `No compatible OpenCL platform is available`; changing the platform
-string alone does not enable a GPU. 09i defaults to `CPU_THREADS=4`. For
-another machine, test GPU context creation before running a full
-calculation.
+string alone does not enable a GPU. For another machine, test GPU
+context creation before running a full calculation.
 
-### Windows / CUDA environment for 09j--09k
+### Windows / CUDA environment for 09j--09o
 
 The portable Windows project root is:
 
@@ -745,22 +1040,25 @@ GPU: NVIDIA RTX 4090
 Jupyter kernel: Python (PEARL GPU)
 ```
 
-The portable package includes selected 09f/09g inputs plus the
-parametrized 09h system, portable XML states and the solute trajectory
-needed for downstream analysis. It does not automatically install
-software or reproduce every file from the Mac environment.
+The portable package includes selected upstream inputs plus parametrized
+systems, portable XML states and trajectories needed for downstream
+analysis as defined by the corresponding notebook. It does not
+automatically install software or reproduce every file from the Mac
+environment.
 
 Before a Windows run:
 
 1.  extract the portable package without creating a nested second
     `PEARL` directory;
-2.  verify all transferred files against `MANIFEST_SHA256.json`;
+2.  verify transferred files against the relevant manifest/hash records;
 3.  point notebook `PROJECT_ROOT` to `Path(r"C:\Users\Roberto\PEARL")`;
 4.  verify NVIDIA driver, CUDA-enabled OpenMM context and the
-    `Python (PEARL GPU)` kernel before running production;
-5.  do not regenerate ligand chemistry unless explicitly required.
+    `Python (PEARL GPU)` kernel before production;
+5.  do not regenerate ligand chemistry unless explicitly required by the
+    notebook/protocol.
 
-The portable 09h state files include:
+For the historical MOL00583 branch, the portable 09h state files
+include:
 
 ``` text
 production_system.xml
@@ -770,14 +1068,13 @@ production_final.xml
 physical_system.xml
 ```
 
-The package preserves the 09h system and the neutral MOL00583
-microstate. Binary Mac checkpoints were not transferred. XML portability
-does not imply bitwise-identical stochastic continuation.
+XML portability does not imply bitwise-identical stochastic
+continuation.
 
-09j and 09k are designed so that the existing parametrized system can be
-reused without requiring AmberTools/OpenFF/RDKit for the basic Windows
-production benchmark, provided the transferred hashes and chemistry
-audit pass.
+The same general CUDA execution principles apply to the MOL00484
+follow-up stages. Different stochastic seeds/velocities provide
+replicated stochastic branches but do not, by themselves, establish
+complete thermodynamic convergence.
 
 ### REINVENT4
 
@@ -841,7 +1138,8 @@ during Meeko receptor preparation.
 
 ## Suggested execution order
 
-The notebooks should be run sequentially:
+The historical workflow is preserved and the MOL00484 site-focused
+follow-up is appended as an additional post-audit branch:
 
 ``` text
 09a
@@ -857,21 +1155,26 @@ The notebooks should be run sequentially:
 09f
  ↓
 09g
- ↓
-09h
- ↓
-09i
- ↓
-post-selection Windows/CUDA follow-up
- ├── 09j  free MOL00583 in water
- └── 09k  bound MOL00583–EGFR replicas
+ │
+ ├── historical MOL00583 branch
+ │    ├── 09h  MOL00583–EGFR initial MD
+ │    ├── 09i  MOL00583 endpoint energetics
+ │    ├── 09j  free MOL00583 in water
+ │    └── 09k  MOL00583–EGFR replicas
+ │
+ └── post-audit site-relevant MOL00484 branch
+      ├── 09l  MOL00484–EGFR initial MD validation
+      ├── 09m  MOL00484 endpoint energetics
+      ├── 09n  free MOL00484 in water
+      └── 09o  MOL00484–EGFR replicated MD
 ```
 
-Several stages depend on files exported by the previous notebook, so the
-`outputs/` directory should be preserved between runs. For 09j--09k,
-also preserve the transferred 09h topology, atom ordering, parameter
-cache and XML states because these define the chemistry and system
-identity used for the Windows follow-up.
+Several stages depend on files exported by previous notebooks, so the
+`outputs/` directory should be preserved between runs. For Windows/CUDA
+follow-up stages, preserve the transferred topology, atom ordering,
+parameter cache and XML states required by the corresponding notebook
+because these define the chemistry and system identity used in the
+simulation.
 
 09c, 09e and 09f contain external-tool stages:
 
@@ -888,7 +1191,7 @@ re-imports the generated results for analysis.
 
 ## Output directories
 
-The main output roots are:
+The main output roots include:
 
 ``` text
 outputs/
@@ -905,9 +1208,21 @@ outputs/
 │   └── <unique_run>/
 ├── pipeline_5_09j_free_ligand/
 │   └── <unique_run>/
-└── pipeline_5_09k_bound_replicates/
+├── pipeline_5_09k_bound_replicates/
+│   └── <unique_run>/
+├── pipeline_5_09l_mol00484_md/
+│   └── <unique_run>/
+├── pipeline_5_09m_mol00484_endpoint/
+│   └── <unique_run>/
+├── pipeline_5_09n_mol00484_free_water/
+│   └── <unique_run>/
+└── pipeline_5_09o_mol00484_bound_replicates/
     └── <unique_run>/
 ```
+
+Exact directory names generated by 09l--09o should be taken from the
+corresponding notebook output/provenance if they differ from the
+descriptive names above.
 
 Each notebook writes some combination of:
 
@@ -919,14 +1234,14 @@ reports/
 inputs/
 ```
 
-The final integrated table is:
+The final historical integrated table remains:
 
 ``` text
 outputs/pipeline_5_pharmacophore_09g_integrated_lead_selection/
 tables/09g_integrated_lead_priority.csv
 ```
 
-The 09g lead-selection report is:
+The 09g lead-selection report remains:
 
 ``` text
 outputs/pipeline_5_pharmacophore_09g_integrated_lead_selection/
@@ -968,6 +1283,32 @@ Pipeline 5 is a **computational prototype**.
     corrects interpretation rather than rewriting past computations.
 15. Experimental binding, functional and selectivity assays remain
     necessary for biological validation.
+16. MOL00484 is followed in 09l--09o because A24 identified its
+    historical selected pose as native-EGF-interface relevant; this
+    follow-up does not retrospectively alter the 09g ranking.
+17. The 09l ligand RMSD reflects rearrangement relative to the starting
+    pose and must be interpreted together with the direct
+    native-interface distance/contact analysis.
+18. The 09m value (\~-14.249 ± 1.914 kcal/mol) is an endpoint energetic
+    proxy and is not rigorous binding ΔG, Kd, Ki or experimental
+    evidence of affinity.
+19. The 09n/09o free-versus-bound RMSD comparison uses self-referenced
+    trajectory metrics and describes relative internal conformational
+    mobility, not an absolute free-to-bound structural transformation.
+20. In 09o, 2400/2400 analyzed frames retain contact with the native
+    EGF-interface region under the implemented 4.5 Å criterion. This is
+    computational evidence of dynamic site persistence, not experimental
+    proof of binding or inhibition.
+21. Three 10 ns 09o replicas improve reproducibility assessment but do
+    not establish complete thermodynamic convergence or exclude slower
+    dissociation/reorganization processes.
+22. The contrast between the off-site MOL00583 branch and the
+    site-relevant MOL00484 branch is a site-specific structural/dynamic
+    comparison, not a quantitative affinity comparison and not an
+    automatic post-audit reranking.
+23. Experimental binding, functional inhibition, selectivity and
+    biological assays remain necessary before MOL00484 can be considered
+    experimentally validated.
 
 ------------------------------------------------------------------------
 
@@ -988,16 +1329,14 @@ Historical 09g ordering, preserved as provenance:
 4. MOL00273  — historical follow-up finalist
 ```
 
-This is **not** a post-audit EGF-site ranking. A24 shows that the
-selected MOL00583 pose is off-site, whereas MOL00484 retains a selected
-pose relevant to the native EGF interface. A26 therefore supports
-site-focused reassessment rather than automatic reranking.
+This is **not** a post-audit EGF-site ranking.
 
-The downstream audit is consistent:
+For the historical MOL00583 branch:
 
 ``` text
-09h / A26b: 0/400 analyzed frames contact the native EGF interface
-09k / A26c: 0/2400 analyzed frames contact the native EGF interface
+A24/A26:     historical propagated pose is off-site
+09h/A26b:    0/400 analyzed frames contact the native EGF interface
+09k/A26c:    0/2400 analyzed frames contact the native EGF interface
 ```
 
 Thus 09h--09k characterize an **off-site EGFR--MOL00583 configuration**.
@@ -1005,10 +1344,59 @@ The simulations and endpoint calculations remain valid records of the
 configuration actually studied, but they do not validate MOL00583
 binding at the native EGF--EGFR interface.
 
+For the post-audit MOL00484 branch:
+
+``` text
+A24:         historical selected pose is native-interface relevant
+
+09l:         native-interface contact retained throughout the
+             analyzed initial MD trajectory
+             mean minimum distance = 3.222 Å
+
+09m:         endpoint energetic proxy =
+             -14.249 ± 1.914 kcal/mol
+
+09n:         free MOL00484, 3 × 10 ns
+             mean conformational RMSD =
+             1.436 ± 0.391 Å
+
+09o:         EGFR–MOL00484, 3 × 10 ns
+             2400/2400 analyzed frames contact the native EGF interface
+             mean minimum distance = 3.121 Å
+             mean bound conformational RMSD =
+             1.226 ± 0.235 Å
+```
+
+The new 09l--09o evidence therefore strengthens the site-specific
+interpretation of MOL00484 beyond the static A24 audit. Among the
+historical finalists subjected to these post-selection follow-ups,
+MOL00484 is the configuration with directly replicated dynamic support
+for persistence in the native EGF-interface region under the implemented
+simulation protocol.
+
+This finding does **not** rewrite the historical 09g ranking: `MOL00583`
+remains the original computational lead selected by that procedure. It
+does, however, distinguish the current evidence:
+
+``` text
+historical computational prioritization:
+MOL00583 remains the original 09g lead
+
+post-audit native-interface evidence:
+MOL00484 has replicated site-specific dynamic support
+
+experimental biological validation:
+not yet established
+```
+
 The final interpretation explicitly separates pharmacophore provenance,
 chemistry eligibility, whole-chain docking support, local refinement,
 historical prioritization, native-interface relevance, dynamic
 persistence, endpoint energetics and future experimental validation.
+
+Neither the MOL00583 nor MOL00484 computational results establish
+experimental binding, competitive displacement of EGF, inhibition of
+EGFR signaling, pharmacological potency or therapeutic activity.
 
 ------------------------------------------------------------------------
 
@@ -1024,6 +1412,3 @@ EGFR extracellular domain
 PDB: 3NJP, receptor chain B
 Upstream peptide source: EGF chain D interacting with EGFR chain B
 ```
-
-This repository contains a research/educational computational workflow.
-It is not intended for clinical use.
